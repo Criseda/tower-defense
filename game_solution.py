@@ -59,14 +59,14 @@ class Game:
     def __init__(self):
         self.root = Tk()
         self.root.title("Tower Defense Game")
-        self.root.geometry("800x600")
+        self.root.geometry("1280x720")
         self.root.resizable(False, False)
         self.root.config(bg="black")
 
         self.frame = TkFrame(self.root, bg="black") # this is the frame that holds the canvas
-        self.frame.pack()
+        self.frame.pack(side="left")
 
-        self.canvas = TkCanvas(self.frame, width=800, height=600, bg="black") # this is the canvas that holds the game objects
+        self.canvas = TkCanvas(self.frame, width=1280, height=720, bg="black") # this is the canvas that holds the game objects
         self.canvas.pack()
 
         self.menu = TkMenu(self.root) # menu bar
@@ -88,7 +88,7 @@ class Game:
         self.menu.add_command(label="Exit", command=self.root.quit) # exit button
         
         # Create and display the map
-        map_generator = MapGenerator(self.canvas, 32, 24, cell_size=25)
+        map_generator = MapGenerator(self.canvas, 50, 36, cell_size=20)
         self.map_generator = map_generator
 
 
@@ -106,7 +106,29 @@ class Game:
         messagebox.showinfo("Save Game", "Game saved!")
 
     def load_game(self):
-        messagebox.showinfo("Load Game", "Game loaded!")
+        # Read coordinates from the file and update the map
+        try:
+            with open("coords.txt", "r") as file:
+                lines = file.readlines()
+                coordinates = [eval(line.strip()) for line in lines]
+
+            # Clear the current map
+            self.map_generator.map = [[0 for _ in range(self.map_generator.width)] for _ in range(self.map_generator.height)]
+            self.map_generator.path_coordinates = []
+
+            # Set the coordinates from the file as the new path
+            for coordinate in coordinates:
+                x, y = coordinate
+                self.map_generator.map[y][x] = 1
+                self.map_generator.path_coordinates.append((x, y))
+
+            # Redraw the updated map
+            self.map_generator.draw_map()
+
+            messagebox.showinfo("Load Game", "Game loaded!")
+        except FileNotFoundError:
+            messagebox.showerror("Load Game", "Coords.txt not found. Please save the game first.")
+
 
     def about(self):
         messagebox.showinfo("About", "Tower Defense Game by Your Name")
