@@ -6,8 +6,6 @@
 from tkinter import Tk
 from tkinter import Button as TkButton, Label as TkLabel, Menu as TkMenu, Frame as TkFrame, Canvas as TkCanvas, messagebox as messagebox
 import time
-import threading
-from types import DynamicClassAttribute
 # ---All functions go here---
 
 
