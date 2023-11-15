@@ -30,7 +30,7 @@ class MovingCircle:
                 y *= cell_size
                 self.coordinates.append((x, y))
 
-    def move_circle_smooth_old(self, steps=10):  # Reduce the number of steps
+    def move_circle_smooth(self, steps=25):  # Reduce the number of steps
         for i in range(len(self.coordinates) - 1):
             start_x, start_y = self.coordinates[i]
             end_x, end_y = self.coordinates[i + 1]
@@ -49,24 +49,17 @@ class MovingCircle:
 
                 # Print the current coordinates of the circle
                 # print(f"Current coordinates: ({x}, {y})")
-    def move_circle_smooth(self, steps=10, delay=25):  # Reduce the number of steps
+    
+    def move_circle_new(self, delay=25):
         if self.coordinates:
-            start_x, start_y = self.coordinates.pop(0)
-            if self.coordinates:
-                end_x, end_y = self.coordinates[0]
-
-                # Interpolate between the start and end coordinates
-                t = 1 / steps
-                x = start_x * (1 - t) + end_x * t
-                y = start_y * (1 - t) + end_y * t
-
-                # Move the circle to the interpolated coordinate
-                self.canvas.coords(self.circle, x-self.radius,
-                                   y-self.radius, x+self.radius, y+self.radius)
-                self.canvas.update()
-
-                # Schedule the next move
-                self.canvas.after(delay, self.move_circle_smooth, steps-1, delay)
+            x, y = self.coordinates.pop(0)
+            self.canvas.coords(self.circle, x-self.radius,
+                               y-self.radius, x+self.radius, y+self.radius)
+            self.canvas.update()
+            
+            #Schedule next move
+            self.canvas.after(delay, self.move_circle_new, delay)
+                
 
 class MapGenerator:
     def __init__(self, master, width, height, cell_size):
@@ -139,6 +132,9 @@ class Game:
         self.root.geometry("1280x720")
         self.root.resizable(False, False)
         self.root.config(bg="black")
+        #new stuff i dont exactly get rn
+        self.circles = []
+        self.cell_size = 20
 
         # this is the frame that holds the canvas
         self.frame = TkFrame(self.root, width=1000, height=720, bg="blue")
@@ -164,17 +160,23 @@ class Game:
         self.menu.add_command(label="Exit program",
                               command=self.root.quit)  # exit button
 
-        cell_size = 20
         # Create and display the map
-        map_generator = MapGenerator(self.canvas, 50, 36, cell_size=cell_size)
+        map_generator = MapGenerator(self.canvas, 50, 36, cell_size=self.cell_size)
         map_generator.draw_map_from_file("coords.txt")
 
-        
-        circle = MovingCircle(self.canvas, radius=cell_size//2)
-        circle.read_coordinates('middle.txt', cell_size)
-        circle.move_circle_smooth()
+        self.start_circles()
 
         self.root.mainloop()
+    
+    def create_circles(self, num_circles, delay):
+        for i in range(num_circles):
+            circle = MovingCircle(self.canvas, self.cell_size//2)
+            circle.read_coordinates('middle.txt', self.cell_size)
+            self.circles.append(circle)
+            self.canvas.after(i * delay, circle.move_circle_new)
+    
+    def start_circles(self):
+        self.create_circles(num_circles=5, delay=250) # delay from circle to another
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
