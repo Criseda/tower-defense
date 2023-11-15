@@ -7,11 +7,12 @@ from tkinter import Tk
 from tkinter import Button as TkButton, Label as TkLabel, Menu as TkMenu, Frame as TkFrame, Canvas as TkCanvas, messagebox as messagebox
 import time
 import threading
+from types import DynamicClassAttribute
 # ---All functions go here---
 
 
 class MovingCircle:
-    def __init__(self, canvas, radius=10):
+    def __init__(self, canvas, radius=10): 
         self.canvas = canvas
         self.radius = radius
         self.circle = self.canvas.create_oval(
@@ -23,7 +24,7 @@ class MovingCircle:
             lines = file.readlines()
             for line in lines:
                 # Remove parentheses and split by comma
-                x, y = map(int, line.replace(
+                x, y = map(float, line.replace(
                     '(', '').replace(')', '').split(','))
                 # Convert grid indices to pixel coordinates
                 x *= cell_size
@@ -50,7 +51,7 @@ class MovingCircle:
                 # Print the current coordinates of the circle
                 # print(f"Current coordinates: ({x}, {y})")
     
-    def move_circle_new(self, delay=25):
+    def move_circle(self, delay=10):
         if self.coordinates:
             x, y = self.coordinates.pop(0)
             self.canvas.coords(self.circle, x-self.radius,
@@ -58,7 +59,7 @@ class MovingCircle:
             self.canvas.update()
             
             #Schedule next move
-            self.canvas.after(delay, self.move_circle_new, delay)
+            self.canvas.after(delay, self.move_circle, delay)
                 
 
 class MapGenerator:
@@ -171,12 +172,13 @@ class Game:
     def create_circles(self, num_circles, delay):
         for i in range(num_circles):
             circle = MovingCircle(self.canvas, self.cell_size//2)
-            circle.read_coordinates('middle.txt', self.cell_size)
+            circle.read_coordinates('middle_smooth.txt', self.cell_size)
             self.circles.append(circle)
-            self.canvas.after(i * delay, circle.move_circle_new)
+            self.canvas.after(i * delay, circle.move_circle)
+    
     
     def start_circles(self):
-        self.create_circles(num_circles=5, delay=250) # delay from circle to another
+        self.create_circles(num_circles=5, delay=1000) # delay from circle to another
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
@@ -191,10 +193,29 @@ class Game:
     def about(self):
         messagebox.showinfo("About", "Tower Defense Game by Your Name")
 
+def create_smooth_path(input_file, output_file, steps=10):
+    with open(input_file, 'r') as f:
+        coordinates = [eval(line.strip()) for line in f]
 
+    with open(output_file, 'w') as f:
+        for i in range(len(coordinates) - 1):
+            start_x, start_y = coordinates[i]
+            end_x, end_y = coordinates[i + 1]
+
+            # Generate and write interpolated coordinates
+            for step in range(steps):
+                t = step / steps
+                x = start_x * (1 - t) + end_x * t
+                y = start_y * (1 - t) + end_y * t
+                f.write(f"({x}, {y})\n")
+
+            # Write end coordinate
+            f.write(f"({end_x}, {end_y})\n")
+    
 # ---RUN PROGRAM--- #
 def main():
     game = Game()
+    # create_smooth_path('middle.txt', 'middle_smooth.txt', steps=25)
 
 
 if __name__ == "__main__":
