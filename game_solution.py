@@ -12,7 +12,7 @@ from types import DynamicClassAttribute
 
 
 class MovingCircle:
-    def __init__(self, canvas, radius=10): 
+    def __init__(self, canvas, radius=10):
         self.canvas = canvas
         self.radius = radius
         self.circle = self.canvas.create_oval(
@@ -50,17 +50,17 @@ class MovingCircle:
 
                 # Print the current coordinates of the circle
                 # print(f"Current coordinates: ({x}, {y})")
-    
+
     def move_circle(self, delay=10):
         if self.coordinates:
             x, y = self.coordinates.pop(0)
             self.canvas.coords(self.circle, x-self.radius,
                                y-self.radius, x+self.radius, y+self.radius)
             self.canvas.update()
-            
-            #Schedule next move
+
+            # Schedule next move
             self.canvas.after(delay, self.move_circle, delay)
-                
+
 
 class MapGenerator:
     def __init__(self, master, width, height, cell_size):
@@ -76,7 +76,7 @@ class MapGenerator:
         self.path_coordinates = []  # To store the coordinates of the selected path
 
         # Binding the left mouse click event to the canvas
-        self.canvas.bind("<Button-1>", self.on_canvas_click)
+        # self.canvas.bind("<Button-1>", self.on_canvas_click)
 
     def on_canvas_click(self, event):
         # Calculate the grid coordinates based on the mouse click position
@@ -105,7 +105,8 @@ class MapGenerator:
     def draw_map(self):
         for y, row in enumerate(self.map):
             for x, cell in enumerate(row):
-                color = "#8B4513" if cell == 1 else "green" # dark brown for road, green for grass
+                # dark brown for road, green for grass
+                color = "#8B4513" if cell == 1 else "green"
                 self.canvas.create_rectangle(x * self.cell_size, y * self.cell_size,
                                              (x + 1) * self.cell_size, (y +
                                                                         1) * self.cell_size,
@@ -113,8 +114,8 @@ class MapGenerator:
 
     def draw_map_from_file(self, filename):
         with open("coords.txt", "r") as file:
-                lines = file.readlines()
-                coordinates = [eval(line.strip()) for line in lines]
+            lines = file.readlines()
+            coordinates = [eval(line.strip()) for line in lines]
 
         # Set the coordinates from the file as the new path
         for coordinate in coordinates:
@@ -133,7 +134,7 @@ class Game:
         self.root.geometry("1280x720")
         self.root.resizable(False, False)
         self.root.config(bg="black")
-        #new stuff i dont exactly get rn
+        # new stuff i dont exactly get rn
         self.circles = []
         self.cell_size = 20
 
@@ -162,23 +163,24 @@ class Game:
                               command=self.root.quit)  # exit button
 
         # Create and display the map
-        map_generator = MapGenerator(self.canvas, 50, 36, cell_size=self.cell_size)
+        map_generator = MapGenerator(
+            self.canvas, 50, 36, cell_size=self.cell_size)
         map_generator.draw_map_from_file("coords.txt")
 
         self.start_circles()
 
         self.root.mainloop()
-    
+
     def create_circles(self, num_circles, delay):
         for i in range(num_circles):
             circle = MovingCircle(self.canvas, self.cell_size//2)
             circle.read_coordinates('middle_smooth.txt', self.cell_size)
             self.circles.append(circle)
             self.canvas.after(i * delay, circle.move_circle)
-    
-    
+
     def start_circles(self):
-        self.create_circles(num_circles=5, delay=1000) # delay from circle to another
+        # delay from circle to another
+        self.create_circles(num_circles=5, delay=1000)
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
@@ -189,9 +191,9 @@ class Game:
     def load_game(self):
         messagebox.showinfo("Load Game", "Game loaded!")
 
-
     def about(self):
         messagebox.showinfo("About", "Tower Defense Game by Your Name")
+
 
 def create_smooth_path(input_file, output_file, steps=10):
     with open(input_file, 'r') as f:
@@ -211,8 +213,10 @@ def create_smooth_path(input_file, output_file, steps=10):
 
             # Write end coordinate
             f.write(f"({end_x}, {end_y})\n")
-    
+
 # ---RUN PROGRAM--- #
+
+
 def main():
     game = Game()
     # create_smooth_path('middle.txt', 'middle_smooth.txt', steps=25)
