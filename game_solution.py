@@ -6,6 +6,7 @@
 from tkinter import Tk
 from tkinter import Button as TkButton, Label as TkLabel, Menu as TkMenu, Frame as TkFrame, Canvas as TkCanvas, messagebox as messagebox
 import time
+import threading
 # ---All functions go here---
 
 
@@ -14,7 +15,7 @@ class MovingCircle:
         self.canvas = canvas
         self.radius = radius
         self.circle = self.canvas.create_oval(
-            0, 0, radius*2, radius*2, fill='blue')
+            0, 0, radius*2, radius*2, fill='black')
         self.coordinates = []
 
     def read_coordinates(self, filename, cell_size):
@@ -29,16 +30,7 @@ class MovingCircle:
                 y *= cell_size
                 self.coordinates.append((x, y))
 
-    def move_circle(self):
-        for coord in self.coordinates:
-            x, y = coord
-            # Adjust the circle's position to be centered in the grid cell
-            self.canvas.coords(self.circle, x-self.radius,
-                               y-self.radius, x+self.radius, y+self.radius)
-            self.canvas.update()
-            time.sleep(0.1)  # delay for smooth transition
-
-    def move_circle_smooth(self, steps=25):  # Reduce the number of steps
+    def move_circle_smooth_old(self, steps=10):  # Reduce the number of steps
         for i in range(len(self.coordinates) - 1):
             start_x, start_y = self.coordinates[i]
             end_x, end_y = self.coordinates[i + 1]
@@ -55,15 +47,34 @@ class MovingCircle:
                 self.canvas.update()
                 time.sleep(0.0025)  # Reduce the delay
 
+                # Print the current coordinates of the circle
+                # print(f"Current coordinates: ({x}, {y})")
+    def move_circle_smooth(self, steps=10, delay=25):  # Reduce the number of steps
+        if self.coordinates:
+            start_x, start_y = self.coordinates.pop(0)
+            if self.coordinates:
+                end_x, end_y = self.coordinates[0]
+
+                # Interpolate between the start and end coordinates
+                t = 1 / steps
+                x = start_x * (1 - t) + end_x * t
+                y = start_y * (1 - t) + end_y * t
+
+                # Move the circle to the interpolated coordinate
+                self.canvas.coords(self.circle, x-self.radius,
+                                   y-self.radius, x+self.radius, y+self.radius)
+                self.canvas.update()
+
+                # Schedule the next move
+                self.canvas.after(delay, self.move_circle_smooth, steps-1, delay)
 
 class MapGenerator:
-    def __init__(self, master, width, height, cell_size=30):
+    def __init__(self, master, width, height, cell_size):
         self.master = master
         self.width = width
         self.height = height
         self.cell_size = cell_size
-        self.canvas = TkCanvas(master, width=width *
-                               cell_size, height=height * cell_size, bg="white")
+        self.canvas = master
         self.canvas.pack()
 
         self.map = [[0 for _ in range(width)]
@@ -100,25 +111,25 @@ class MapGenerator:
     def draw_map(self):
         for y, row in enumerate(self.map):
             for x, cell in enumerate(row):
-                color = "black" if cell == 1 else "white"
+                color = "#8B4513" if cell == 1 else "green" # dark brown for road, green for grass
                 self.canvas.create_rectangle(x * self.cell_size, y * self.cell_size,
                                              (x + 1) * self.cell_size, (y +
                                                                         1) * self.cell_size,
                                              fill=color)
 
     def draw_map_from_file(self, filename):
-        with open(filename, 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                # Remove parentheses and split by comma
-                x, y = map(int, line.replace(
-                    '(', '').replace(')', '').split(','))
-                # Convert grid indices to pixel coordinates
-                x *= self.cell_size
-                y *= self.cell_size
-                # Draw a cell at the coordinate
-                self.master.create_rectangle(
-                    x, y, x+self.cell_size, y+self.cell_size, fill="blue")
+        with open("coords.txt", "r") as file:
+                lines = file.readlines()
+                coordinates = [eval(line.strip()) for line in lines]
+
+        # Set the coordinates from the file as the new path
+        for coordinate in coordinates:
+            x, y = coordinate
+            self.map[y][x] = 1
+            self.path_coordinates.append((x, y))
+
+        # Redraw the updated map
+        self.draw_map()
 
 
 class Game:
@@ -130,11 +141,11 @@ class Game:
         self.root.config(bg="black")
 
         # this is the frame that holds the canvas
-        self.frame = TkFrame(self.root, bg="black")
-        self.frame.pack(side="left")
+        self.frame = TkFrame(self.root, width=1000, height=720, bg="blue")
+        self.frame.pack(side='left')
 
-        # this is the canvas that holds the game objects
-        self.canvas = TkCanvas(self.frame, width=1280, height=720, bg="black")
+        # this is the canvas that holds the map / circle
+        self.canvas = TkCanvas(self.frame, width=1000, height=720, bg="white")
         self.canvas.pack()
 
         self.menu = TkMenu(self.root)  # menu bar
@@ -150,16 +161,15 @@ class Game:
         self.help_menu.add_command(label="About", command=self.about)
         self.menu.add_cascade(label="Help", menu=self.help_menu)
 
-        for i in range(51):
-            self.menu.add_command(label="", state="disabled")  # empty space
-
-        self.menu.add_command(
-            label="Exit", command=self.root.quit)  # exit button
-
-        # Create and display the map
-        # map_generator = MapGenerator(self.canvas, 50, 36, cell_size=20)
+        self.menu.add_command(label="Exit program",
+                              command=self.root.quit)  # exit button
 
         cell_size = 20
+        # Create and display the map
+        map_generator = MapGenerator(self.canvas, 50, 36, cell_size=cell_size)
+        map_generator.draw_map_from_file("coords.txt")
+
+        
         circle = MovingCircle(self.canvas, radius=cell_size//2)
         circle.read_coordinates('middle.txt', cell_size)
         circle.move_circle_smooth()
@@ -167,41 +177,14 @@ class Game:
         self.root.mainloop()
 
     def new_game(self):
-        # Print the path coordinates to the console
-        path_coordinates = self.map_generator.get_path_coordinates()
-        print("Predefined Path Coordinates:")
-        for coordinate in path_coordinates:
-            print(coordinate)
         messagebox.showinfo("New Game", "Starting a new game!")
 
     def save_game(self):
         messagebox.showinfo("Save Game", "Game saved!")
 
     def load_game(self):
-        # Read coordinates from the file and update the map
-        try:
-            with open("coords.txt", "r") as file:
-                lines = file.readlines()
-                coordinates = [eval(line.strip()) for line in lines]
+        messagebox.showinfo("Load Game", "Game loaded!")
 
-            # Clear the current map
-            self.map_generator.map = [[0 for _ in range(
-                self.map_generator.width)] for _ in range(self.map_generator.height)]
-            self.map_generator.path_coordinates = []
-
-            # Set the coordinates from the file as the new path
-            for coordinate in coordinates:
-                x, y = coordinate
-                self.map_generator.map[y][x] = 1
-                self.map_generator.path_coordinates.append((x, y))
-
-            # Redraw the updated map
-            self.map_generator.draw_map()
-
-            messagebox.showinfo("Load Game", "Game loaded!")
-        except FileNotFoundError:
-            messagebox.showerror(
-                "Load Game", "Coords.txt not found. Please save the game first.")
 
     def about(self):
         messagebox.showinfo("About", "Tower Defense Game by Your Name")
