@@ -4,7 +4,12 @@
 # tested on python 3.8.10
 # initial commit: 09-11-2023
 from tkinter import Tk
-from tkinter import Button as TkButton, Label as TkLabel, Menu as TkMenu, Frame as TkFrame, Canvas as TkCanvas, messagebox as messagebox
+from tkinter import (Button as TkButton,
+                     Label as TkLabel,
+                     Menu as TkMenu,
+                     Frame as TkFrame,
+                     Canvas as TkCanvas,
+                     messagebox as messagebox)
 import time
 # ---All functions go here---
 
@@ -111,7 +116,7 @@ class MapGenerator:
                                              fill=color)
 
     def draw_map_from_file(self, filename):
-        with open("coords.txt", "r") as file:
+        with open(filename, "r") as file:
             lines = file.readlines()
             coordinates = [eval(line.strip()) for line in lines]
 
@@ -132,7 +137,7 @@ class Game:
         self.root.geometry("1280x720")
         self.root.resizable(False, False)
         self.root.config(bg="black")
-        # new stuff i dont exactly get rn
+        # new stuff I do not exactly get rn
         self.circles = []
         self.cell_size = 20
 
@@ -178,7 +183,7 @@ class Game:
 
     def start_circles(self):
         # delay from circle to another
-        self.create_circles(num_circles=5, delay=1000)
+        self.create_circles(num_circles=2, delay=1000)
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
@@ -216,7 +221,7 @@ def create_smooth_path(input_file, output_file, steps=10):
 
 
 def main():
-    game = Game()
+    Game()
     # create_smooth_path('middle.txt', 'middle_smooth.txt', steps=25)
 
 
