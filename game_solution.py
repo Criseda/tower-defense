@@ -1,12 +1,16 @@
+"""
+This module contains the implementation of a Tower Defense Game.
+It uses tkinter for the GUI and provides classes for generating maps,
+moving circles and the game itself.
+"""
+
 # Laurentiu Cristian Preda
 # GAME SOLUTION - TOWER DEFENSE GAME!
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
 from tkinter import Tk
-from tkinter import (Button as TkButton,
-                     Label as TkLabel,
-                     Menu as TkMenu,
+from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
                      Canvas as TkCanvas,
                      messagebox as messagebox)
@@ -15,6 +19,16 @@ import time
 
 
 class MovingCircle:
+    """
+    A class that represents a moving circle on a canvas.
+
+    Attributes:
+    canvas (tkinter.Canvas): The canvas on which the circle is drawn.
+    radius (int): The radius of the circle.
+    circle (int): The ID of the circle on the canvas.
+    coordinates (list): A list of (x, y) coordinates that the circle will move to.
+    """
+
     def __init__(self, canvas, radius=10):
         self.canvas = canvas
         self.radius = radius
@@ -23,7 +37,7 @@ class MovingCircle:
         self.coordinates = []
 
     def read_coordinates(self, filename, cell_size):
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding="utf8") as file:
             lines = file.readlines()
             for line in lines:
                 # Remove parentheses and split by comma
@@ -66,6 +80,38 @@ class MovingCircle:
 
 
 class MapGenerator:
+    """
+    A class used to generate and draw a map for a game.
+
+    Attributes
+    ----------
+    master : tkinter.Canvas
+        The canvas where the map will be drawn.
+    width : int
+        The width of the map in cells.
+    height : int
+        The height of the map in cells.
+    cell_size : int
+        The size of each cell in pixels.
+    canvas : tkinter.Canvas
+        The canvas where the map will be drawn.
+    map : list
+        A 2D list representing the map. Each element is either 0 (grass) or 1 (road).
+    path_coordinates : list
+        A list of tuples representing the coordinates of the selected path.
+
+    Methods
+    -------
+    on_canvas_click(event)
+        Toggles the path status of the clicked cell and updates the map accordingly.
+    get_path_coordinates()
+        Returns the coordinates of the selected path.
+    draw_map()
+        Draws the map on the canvas.
+    draw_map_from_file(filename)
+        Reads the coordinates of the selected path from a file and updates the map accordingly.
+    """
+
     def __init__(self, master, width, height, cell_size):
         self.master = master
         self.width = width
@@ -82,6 +128,14 @@ class MapGenerator:
         # self.canvas.bind("<Button-1>", self.on_canvas_click)
 
     def on_canvas_click(self, event):
+        """
+        Toggles the path status of the clicked cell and updates the map accordingly.
+
+        Parameters
+        ----------
+        event : tkinter.Event
+            The mouse click event.
+        """
         # Calculate the grid coordinates based on the mouse click position
         x = event.x // self.cell_size
         y = event.y // self.cell_size
@@ -103,9 +157,20 @@ class MapGenerator:
                                          fill="white")
 
     def get_path_coordinates(self):
+        """
+        Returns the coordinates of the selected path.
+
+        Returns
+        -------
+        list
+            A list of tuples representing the coordinates of the selected path.
+        """
         return self.path_coordinates
 
     def draw_map(self):
+        """
+        Draws the map on the canvas.
+        """
         for y, row in enumerate(self.map):
             for x, cell in enumerate(row):
                 # dark brown for road, green for grass
@@ -116,7 +181,15 @@ class MapGenerator:
                                              fill=color)
 
     def draw_map_from_file(self, filename):
-        with open(filename, "r") as file:
+        """
+        Reads the coordinates of the selected path from a file and updates the map accordingly.
+
+        Parameters
+        ----------
+        filename : str
+            The name of the file containing the coordinates of the selected path.
+        """
+        with open(filename, "r", encoding="utf8") as file:
             lines = file.readlines()
             coordinates = [eval(line.strip()) for line in lines]
 
@@ -131,6 +204,20 @@ class MapGenerator:
 
 
 class Game:
+    """
+    A class representing the Tower Defense Game.
+
+    Attributes:
+    - root: The main window of the game.
+    - circles: A list of MovingCircle objects representing the circles in the game.
+    - cell_size: The size of each cell in the game.
+    - frame: The frame that holds the canvas.
+    - canvas: The canvas that holds the map and circles.
+    - menu: The menu bar of the game.
+    - file_menu: The file menu of the game.
+    - help_menu: The help menu of the game.
+    """
+
     def __init__(self):
         self.root = Tk()
         self.root.title("Tower Defense Game")
@@ -199,10 +286,19 @@ class Game:
 
 
 def create_smooth_path(input_file, output_file, steps=10):
-    with open(input_file, 'r') as f:
+    """
+    Interpolates a smooth path between a series of coordinates and writes the result to a file.
+
+    Args:
+        input_file (str): The path to the input file containing the coordinates.
+        output_file (str): The path to the output file to write the interpolated coordinates to.
+        steps (int, optional): The number of steps to use for interpolation. Defaults to 10.
+    """
+
+    with open(input_file, 'r', encoding="utf8") as f:
         coordinates = [eval(line.strip()) for line in f]
 
-    with open(output_file, 'w') as f:
+    with open(output_file, 'w', encoding="utf8") as f:
         for i in range(len(coordinates) - 1):
             start_x, start_y = coordinates[i]
             end_x, end_y = coordinates[i + 1]
@@ -221,6 +317,9 @@ def create_smooth_path(input_file, output_file, steps=10):
 
 
 def main():
+    """
+    The main function of the game_solution module.
+    """
     Game()
     # create_smooth_path('middle.txt', 'middle_smooth.txt', steps=25)
 
