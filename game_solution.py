@@ -14,8 +14,20 @@ from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
                      Canvas as TkCanvas,
                      messagebox as messagebox)
-import time
 # ---All functions go here---
+
+
+def read_coordinates_new(filename):
+    coordinates = []
+    with open(filename, 'r', encoding="utf8") as file:
+        for line in file:
+            x, y = map(float, line.replace(
+                '(', '').replace(')', '').split(','))
+            coordinates.append((x, y))
+    return coordinates
+
+
+route = read_coordinates_new('route.txt')
 
 
 class MovingCircle:
@@ -34,49 +46,30 @@ class MovingCircle:
         self.radius = radius
         self.circle = self.canvas.create_oval(
             0, 0, radius*2, radius*2, fill='black')
-        self.coordinates = []
+        self.current_coordinate_index = 0
+        # self.coordinates = self.read_coordinates_new('route.txt')
 
-    def read_coordinates(self, filename, cell_size):
-        with open(filename, 'r', encoding="utf8") as file:
-            lines = file.readlines()
-            for line in lines:
-                # Remove parentheses and split by comma
-                x, y = map(float, line.replace(
-                    '(', '').replace(')', '').split(','))
-                # Convert grid indices to pixel coordinates
-                x *= cell_size
-                y *= cell_size
-                self.coordinates.append((x, y))
+    # def read_coordinates(self, filename, cell_size):
+    #     with open(filename, 'r', encoding="utf8") as file:
+    #         for line in file:
+    #             x, y = map(float, line.replace(
+    #                 '(', '').replace(')', '').split(','))
+    #             x *= cell_size
+    #             y *= cell_size
+    #             self.coordinates.append((x, y))
+        # Write the new coordinates to the file
 
-    def move_circle_smooth(self, steps=25):  # Reduce the number of steps
-        for i in range(len(self.coordinates) - 1):
-            start_x, start_y = self.coordinates[i]
-            end_x, end_y = self.coordinates[i + 1]
-
-            # Interpolate between the start and end coordinates
-            for step in range(steps):
-                t = step / steps
-                x = start_x * (1 - t) + end_x * t
-                y = start_y * (1 - t) + end_y * t
-
-                # Move the circle to the interpolated coordinate
+    def move_circle(self, delay=50):
+        global route
+        if route:
+            if self.current_coordinate_index < len(route):
+                x, y = route[self.current_coordinate_index]
                 self.canvas.coords(self.circle, x-self.radius,
                                    y-self.radius, x+self.radius, y+self.radius)
                 self.canvas.update()
-                time.sleep(0.0025)  # Reduce the delay
-
-                # Print the current coordinates of the circle
-                # print(f"Current coordinates: ({x}, {y})")
-
-    def move_circle(self, delay=10):
-        if self.coordinates:
-            x, y = self.coordinates.pop(0)
-            self.canvas.coords(self.circle, x-self.radius,
-                               y-self.radius, x+self.radius, y+self.radius)
-            self.canvas.update()
-
-            # Schedule next move
-            self.canvas.after(delay, self.move_circle, delay)
+                self.current_coordinate_index += 1
+                # Schedule next move
+                self.canvas.after(delay, self.move_circle, delay)
 
 
 class MapGenerator:
@@ -264,13 +257,20 @@ class Game:
     def create_circles(self, num_circles, delay):
         for i in range(num_circles):
             circle = MovingCircle(self.canvas, self.cell_size//2)
-            circle.read_coordinates('middle_smooth.txt', self.cell_size)
             self.circles.append(circle)
             self.canvas.after(i * delay, circle.move_circle)
 
+    def create_circles_new(self, num_circles, delay, i=0):
+        if i < num_circles:
+            circle = MovingCircle(self.canvas, self.cell_size//2)
+            self.circles.append(circle)
+            self.canvas.after(i * delay, circle.move_circle)
+            self.canvas.after(delay, self.create_circles_new,
+                              num_circles, delay, i+1)
+
     def start_circles(self):
         # delay from circle to another
-        self.create_circles(num_circles=2, delay=1000)
+        self.create_circles_new(num_circles=10, delay=1500)
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
