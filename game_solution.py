@@ -47,19 +47,9 @@ class MovingCircle:
         self.circle = self.canvas.create_oval(
             0, 0, radius*2, radius*2, fill='black')
         self.current_coordinate_index = 0
-        # self.coordinates = self.read_coordinates_new('route.txt')
 
-    # def read_coordinates(self, filename, cell_size):
-    #     with open(filename, 'r', encoding="utf8") as file:
-    #         for line in file:
-    #             x, y = map(float, line.replace(
-    #                 '(', '').replace(')', '').split(','))
-    #             x *= cell_size
-    #             y *= cell_size
-    #             self.coordinates.append((x, y))
-        # Write the new coordinates to the file
 
-    def move_circle(self, delay=50):
+    def move_circle(self, delay=15):
         global route
         if route:
             if self.current_coordinate_index < len(route):
@@ -69,7 +59,7 @@ class MovingCircle:
                 self.canvas.update()
                 self.current_coordinate_index += 1
                 # Schedule next move
-                self.canvas.after(delay, self.move_circle, delay)
+                self.canvas.after(delay, self.move_circle, delay) # 2nd delay might be redundant
 
 
 class MapGenerator:
@@ -254,13 +244,13 @@ class Game:
 
         self.root.mainloop()
 
-    def create_circles(self, num_circles, delay):
+    def create_circles(self, num_circles, delay): #I AM UNSURE WHICH ONE IS BETTER
         for i in range(num_circles):
             circle = MovingCircle(self.canvas, self.cell_size//2)
             self.circles.append(circle)
             self.canvas.after(i * delay, circle.move_circle)
 
-    def create_circles_new(self, num_circles, delay, i=0):
+    def create_circles_new(self, num_circles, delay, i=0): # I AM UNSURE WHICH ONE IS BETTER
         if i < num_circles:
             circle = MovingCircle(self.canvas, self.cell_size//2)
             self.circles.append(circle)
@@ -270,7 +260,7 @@ class Game:
 
     def start_circles(self):
         # delay from circle to another
-        self.create_circles_new(num_circles=10, delay=1500)
+        self.create_circles(num_circles=10, delay=1500)
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
