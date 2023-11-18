@@ -14,6 +14,7 @@ from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
                      Canvas as TkCanvas,
                      messagebox as messagebox)
+import math
 # ---All functions go here---
 
 
@@ -48,8 +49,7 @@ class MovingCircle:
             0, 0, radius*2, radius*2, fill='black')
         self.current_coordinate_index = 0
 
-
-    def move_circle(self, delay=15):
+    def move_circle(self, delay=20):
         global route
         if route:
             if self.current_coordinate_index < len(route):
@@ -59,7 +59,8 @@ class MovingCircle:
                 self.canvas.update()
                 self.current_coordinate_index += 1
                 # Schedule next move
-                self.canvas.after(delay, self.move_circle, delay) # 2nd delay might be redundant
+                # 2nd delay might be redundant, removing it
+                self.canvas.after(delay, self.move_circle)
 
 
 class MapGenerator:
@@ -244,23 +245,28 @@ class Game:
 
         self.root.mainloop()
 
-    def create_circles(self, num_circles, delay): #I AM UNSURE WHICH ONE IS BETTER
-        for i in range(num_circles):
+    def create_circles_newnew(self, num_circles):
+        for _ in range(num_circles):
             circle = MovingCircle(self.canvas, self.cell_size//2)
             self.circles.append(circle)
-            self.canvas.after(i * delay, circle.move_circle)
 
-    def create_circles_new(self, num_circles, delay, i=0): # I AM UNSURE WHICH ONE IS BETTER
-        if i < num_circles:
-            circle = MovingCircle(self.canvas, self.cell_size//2)
-            self.circles.append(circle)
-            self.canvas.after(i * delay, circle.move_circle)
-            self.canvas.after(delay, self.create_circles_new,
-                              num_circles, delay, i+1)
+    def update_circles(self, circle_index=0):
+        if circle_index < len(self.circles):
+            # Move the circle
+            self.circles[circle_index].move_circle()
+
+            # Schedule the next update with a delay
+            delay_between_circles = 400  # Adjust this value as needed
+            self.root.after(delay_between_circles,
+                            self.update_circles, circle_index + 1)
+        else:
+            # All circles have been moved, schedule the next update
+            self.root.after(1000, self.update_circles)
 
     def start_circles(self):
         # delay from circle to another
-        self.create_circles(num_circles=10, delay=1500)
+        self.create_circles_newnew(num_circles=20)
+        self.update_circles()
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
@@ -273,35 +279,6 @@ class Game:
 
     def about(self):
         messagebox.showinfo("About", "Tower Defense Game by Your Name")
-
-
-def create_smooth_path(input_file, output_file, steps=10):
-    """
-    Interpolates a smooth path between a series of coordinates and writes the result to a file.
-
-    Args:
-        input_file (str): The path to the input file containing the coordinates.
-        output_file (str): The path to the output file to write the interpolated coordinates to.
-        steps (int, optional): The number of steps to use for interpolation. Defaults to 10.
-    """
-
-    with open(input_file, 'r', encoding="utf8") as f:
-        coordinates = [eval(line.strip()) for line in f]
-
-    with open(output_file, 'w', encoding="utf8") as f:
-        for i in range(len(coordinates) - 1):
-            start_x, start_y = coordinates[i]
-            end_x, end_y = coordinates[i + 1]
-
-            # Generate and write interpolated coordinates
-            for step in range(steps):
-                t = step / steps
-                x = start_x * (1 - t) + end_x * t
-                y = start_y * (1 - t) + end_y * t
-                f.write(f"({x}, {y})\n")
-
-            # Write end coordinate
-            f.write(f"({end_x}, {end_y})\n")
 
 # ---RUN PROGRAM--- #
 
