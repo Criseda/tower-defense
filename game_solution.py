@@ -14,7 +14,6 @@ from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
                      Canvas as TkCanvas,
                      messagebox as messagebox)
-import math
 # ---All functions go here---
 
 
@@ -29,6 +28,25 @@ def read_coordinates_new(filename):
 
 
 route = read_coordinates_new('route.txt')
+
+
+class Tower:
+
+    def __init__(self, canvas, size, cell_size):
+        self.canvas = canvas
+        self.size = size
+        self.cell_size = cell_size
+        self.tower = None
+
+    def place_tower(self, x, y):
+
+        self.tower = self.canvas.create_rectangle(x * self.cell_size,
+                                                  y * self.cell_size,
+                                                  (x + self.size) *
+                                                  self.cell_size,
+                                                  (y + self.size) *
+                                                  self.cell_size,
+                                                  fill="red")
 
 
 class MovingCircle:
@@ -64,37 +82,6 @@ class MovingCircle:
 
 
 class MapGenerator:
-    """
-    A class used to generate and draw a map for a game.
-
-    Attributes
-    ----------
-    master : tkinter.Canvas
-        The canvas where the map will be drawn.
-    width : int
-        The width of the map in cells.
-    height : int
-        The height of the map in cells.
-    cell_size : int
-        The size of each cell in pixels.
-    canvas : tkinter.Canvas
-        The canvas where the map will be drawn.
-    map : list
-        A 2D list representing the map. Each element is either 0 (grass) or 1 (road).
-    path_coordinates : list
-        A list of tuples representing the coordinates of the selected path.
-
-    Methods
-    -------
-    on_canvas_click(event)
-        Toggles the path status of the clicked cell and updates the map accordingly.
-    get_path_coordinates()
-        Returns the coordinates of the selected path.
-    draw_map()
-        Draws the map on the canvas.
-    draw_map_from_file(filename)
-        Reads the coordinates of the selected path from a file and updates the map accordingly.
-    """
 
     def __init__(self, master, width, height, cell_size):
         self.master = master
@@ -111,50 +98,12 @@ class MapGenerator:
         # Binding the left mouse click event to the canvas
         # self.canvas.bind("<Button-1>", self.on_canvas_click)
 
-    def on_canvas_click(self, event):
-        """
-        Toggles the path status of the clicked cell and updates the map accordingly.
-
-        Parameters
-        ----------
-        event : tkinter.Event
-            The mouse click event.
-        """
-        # Calculate the grid coordinates based on the mouse click position
-        x = event.x // self.cell_size
-        y = event.y // self.cell_size
-
-        # Toggle the path status of the clicked cell
-        if self.map[y][x] == 0:
-            self.map[y][x] = 1
-            self.path_coordinates.append((x, y))
-            self.canvas.create_rectangle(x * self.cell_size, y * self.cell_size,
-                                         (x + 1) * self.cell_size, (y + 1) *
-                                         self.cell_size,
-                                         fill="black")
-        else:
-            self.map[y][x] = 0
-            self.path_coordinates.remove((x, y))
-            self.canvas.create_rectangle(x * self.cell_size, y * self.cell_size,
-                                         (x + 1) * self.cell_size, (y + 1) *
-                                         self.cell_size,
-                                         fill="white")
-
     def get_path_coordinates(self):
-        """
-        Returns the coordinates of the selected path.
 
-        Returns
-        -------
-        list
-            A list of tuples representing the coordinates of the selected path.
-        """
         return self.path_coordinates
 
     def draw_map(self):
-        """
-        Draws the map on the canvas.
-        """
+
         for y, row in enumerate(self.map):
             for x, cell in enumerate(row):
                 # dark brown for road, green for grass
@@ -165,14 +114,7 @@ class MapGenerator:
                                              fill=color)
 
     def draw_map_from_file(self, filename):
-        """
-        Reads the coordinates of the selected path from a file and updates the map accordingly.
 
-        Parameters
-        ----------
-        filename : str
-            The name of the file containing the coordinates of the selected path.
-        """
         with open(filename, "r", encoding="utf8") as file:
             lines = file.readlines()
             coordinates = [eval(line.strip()) for line in lines]
@@ -188,19 +130,6 @@ class MapGenerator:
 
 
 class Game:
-    """
-    A class representing the Tower Defense Game.
-
-    Attributes:
-    - root: The main window of the game.
-    - circles: A list of MovingCircle objects representing the circles in the game.
-    - cell_size: The size of each cell in the game.
-    - frame: The frame that holds the canvas.
-    - canvas: The canvas that holds the map and circles.
-    - menu: The menu bar of the game.
-    - file_menu: The file menu of the game.
-    - help_menu: The help menu of the game.
-    """
 
     def __init__(self):
         self.root = Tk()
@@ -208,9 +137,9 @@ class Game:
         self.root.geometry("1280x720")
         self.root.resizable(False, False)
         self.root.config(bg="black")
-        # new stuff I do not exactly get rn
         self.circles = []
         self.cell_size = 20
+        self.towers = []
 
         # this is the frame that holds the canvas
         self.frame = TkFrame(self.root, width=1000, height=720, bg="blue")
@@ -219,6 +148,8 @@ class Game:
         # this is the canvas that holds the map / circle
         self.canvas = TkCanvas(self.frame, width=1000, height=720, bg="white")
         self.canvas.pack()
+
+        self.canvas.bind("<Button-3>", self.place_tower)
 
         self.menu = TkMenu(self.root)  # menu bar
         self.root.config(menu=self.menu)
@@ -237,9 +168,10 @@ class Game:
                               command=self.root.quit)  # exit button
 
         # Create and display the map
-        map_generator = MapGenerator(
+        self.map_generator = MapGenerator(
             self.canvas, 50, 36, cell_size=self.cell_size)
-        map_generator.draw_map_from_file("coords.txt")
+
+        self.map_generator.draw_map_from_file("coords.txt")
 
         self.start_circles()
 
@@ -265,8 +197,36 @@ class Game:
 
     def start_circles(self):
         # delay from circle to another
-        self.create_circles_newnew(num_circles=20)
+        self.create_circles_newnew(num_circles=5)
         self.update_circles()
+
+    def tower_placement_valid(self, x, y):
+        # Check if the square under the tower is brown or if there is already a tower placed
+        if self.map_generator.map[x][y] == 1:
+            return False
+
+        for tower in self.towers:
+            tower_x, tower_y = tower.canvas.coords(tower.tower)[:2]
+            tower_size = tower.size * self.cell_size
+
+            if (x * self.cell_size < tower_x + tower_size and
+                    (x + 1) * self.cell_size > tower_x and
+                    y * self.cell_size < tower_y + tower_size and
+                    (y + 1) * self.cell_size > tower_y):
+                return False
+
+        return True
+
+    def place_tower(self, event):
+        # Calculate the grid coordinates based on the mouse click position
+        x = event.x // self.cell_size
+        y = event.y // self.cell_size
+
+        # Check if the square under the tower is brown or if there is already a tower placed
+        if self.tower_placement_valid(x, y):
+            tower = Tower(self.canvas, 3, self.cell_size)
+            tower.place_tower(x, y)
+            self.towers.append(tower)
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
