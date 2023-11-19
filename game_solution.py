@@ -9,6 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
+from os import path
 from tkinter import Tk
 from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
@@ -140,6 +141,7 @@ class Game:
         self.circles = []
         self.cell_size = 20
         self.towers = []
+        self.tower_coordinates = {}
 
         # this is the frame that holds the canvas
         self.frame = TkFrame(self.root, width=1000, height=720, bg="blue")
@@ -202,17 +204,22 @@ class Game:
 
     def tower_placement_valid(self, x, y):
         # Check if the square under the tower is brown or if there is already a tower placed
-        if self.map_generator.map[x][y] == 1:
+        # Convert tower coordinates to match the scale factor of path coordinates
+        x *= self.cell_size
+        y *= self.cell_size
+
+        # Check if the square under the tower is brown or if there is already a tower placed
+        path_x = x // self.cell_size
+        path_y = y // self.cell_size
+        if self.map_generator.map[path_y][path_x] == 1 or (path_x, path_y) in self.map_generator.get_path_coordinates():
+            print("You cannot place a tower over the path!")
             return False
 
+        # Check if there is already a tower placed at the given coordinates
         for tower in self.towers:
-            tower_x, tower_y = tower.canvas.coords(tower.tower)[:2]
-            tower_size = tower.size * self.cell_size
-
-            if (x * self.cell_size < tower_x + tower_size and
-                    (x + 1) * self.cell_size > tower_x and
-                    y * self.cell_size < tower_y + tower_size and
-                    (y + 1) * self.cell_size > tower_y):
+            tower_x, tower_y = self.tower_coordinates[tower]
+            if tower_x == path_x and tower_y == path_y:
+                print("You cannot place a tower onto another tower!")
                 return False
 
         return True
@@ -225,8 +232,9 @@ class Game:
         # Check if the square under the tower is brown or if there is already a tower placed
         if self.tower_placement_valid(x, y):
             tower = Tower(self.canvas, 3, self.cell_size)
-            tower.place_tower(x, y)
             self.towers.append(tower)
+            self.tower_coordinates[tower] = (x, y)
+            tower.place_tower(x, y)
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
