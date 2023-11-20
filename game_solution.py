@@ -9,13 +9,14 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-from os import close, path
+import time
 from tkinter import Tk
 from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
                      Canvas as TkCanvas,
                      messagebox as messagebox)
 from math import hypot
+from turtle import color
 # ---All functions go here---
 
 
@@ -34,11 +35,46 @@ route = read_coordinates_new('route.txt')
 
 class Tower:
 
-    def __init__(self, canvas, size, cell_size):
+    def __init__(self, canvas, size, cell_size, fire_rate=1000, tower_range='inf', colour="red", shooting_colour="orange"):
         self.canvas = canvas
         self.size = size
         self.cell_size = cell_size
         self.tower = None
+        self.init_colour = colour
+        self.shooting_colour = shooting_colour
+        self.fire_rate = fire_rate
+        self.last_shot_time = 0
+        self.tower_range = tower_range
+
+    def can_shoot(self):
+        # Check if enough time has passed since the last shot
+        current_time = time.time() * 1000  # Convert to milliseconds
+        return current_time - self.last_shot_time >= self.fire_rate
+
+    def shoot(self, closest_circle):
+        # SHOOTING LOGIC HERE
+        # DECREASE ITS HEALTH UNTIL IT REACHES ZERO,
+        # THEN REMOVE IT FROM THE LIST OF CIRCLES AND CANVAS
+        damage_per_shot = 20
+
+        self.flash_shooting_colour()  # shoots
+
+        closest_circle.decrease_health(damage_per_shot)
+
+        if closest_circle.health <= 0:
+            self.circles.remove(closest_circle)
+            closest_circle.remove_circle()
+
+        self.last_shot_time = time.time() * 1000  # Update the last shot time
+
+    def flash_shooting_colour(self):
+        # Flash the shooting colour for a short time
+        self.canvas.itemconfig(self.tower, fill=self.shooting_colour)
+        self.canvas.after(100, self.restore_tower_colour)
+
+    def restore_tower_colour(self):
+        # Restore the tower colour to its original colour
+        self.canvas.itemconfig(self.tower, fill=self.init_colour)
 
     def place_tower(self, x, y):
 
@@ -48,17 +84,21 @@ class Tower:
                                                   self.cell_size,
                                                   (y + self.size) *
                                                   self.cell_size,
-                                                  fill="red")
+                                                  fill=self.init_colour)
 
     def find_closest_circle(self, circles):
         tower_x, tower_y = self.canvas.coords(self.tower)[:2]
 
         closest_circle = None
-        min_distance = float('inf')
+        min_distance = float(self.tower_range)
 
         for circle in circles:
-            circle_x, circle_y = self.canvas.coords(
-                circle.circle)[:2]  # Only unpack the first two values
+            try:
+                circle_x, circle_y = self.canvas.coords(
+                    circle.circle)[:2]  # Only unpack the first two values
+            except ValueError:
+                # The circle has been removed from the canvas, skip to next
+                continue
             distance = hypot(circle_x - tower_x, circle_y - tower_y)
 
             if distance < min_distance:
@@ -87,19 +127,40 @@ class MovingCircle:
                                    y-self.radius, x+self.radius, y+self.radius)
                 self.canvas.update()
                 self.current_coordinate_index += 1
-                # Schedule next move
-                # 2nd delay might be redundant, removing it
-                self.canvas.after(delay, self.move_circle)
 
-    def decrease_health(self, damage):
-        self.health -= damage
-        if self.health <= 0:
-            self.remove_circle()
+                if self.current_coordinate_index == len(route):
+                    # The circle has reached the end of the path, remove it
+                    self.remove_circle()
+                else:
+                    # Schedule next move
+                    self.canvas.after(delay, self.move_circle)
+
+    def get_circle_colour(self):
+        # Return the colour of the circle based on its health
+        if self.health > 75:
+            return "green"
+        elif self.health > 50:
+            return "yellow"
+        elif self.health > 25:
+            return "orange"
+        else:
+            return "red"
+
+    def update_circle_colour(self):
+        # Update the circle colour based on current health
+        self.canvas.itemconfig(self.circle, fill=self.get_circle_colour())
 
     def remove_circle(self):
         self.canvas.delete(self.circle)
         self.canvas.update()
         self.current_coordinate_index = 0
+
+    def decrease_health(self, damage):
+        self.health -= damage
+        self.update_circle_colour()
+
+        if self.health <= 0:
+            self.remove_circle()
 
 
 class MapGenerator:
@@ -169,6 +230,7 @@ class Game:
         self.canvas.pack()
 
         self.canvas.bind("<Button-3>", self.place_tower)
+        self.canvas.bind("<Button-1>", self.place_tower)
 
         self.menu = TkMenu(self.root)  # menu bar
         self.root.config(menu=self.menu)
@@ -249,27 +311,32 @@ class Game:
 
         # Check if the square under the tower is brown or if there is already a tower placed
         if self.tower_placement_valid(x, y):
-            tower = Tower(self.canvas, 3, self.cell_size)
-            self.towers.append(tower)
-            self.tower_coordinates[tower] = (x, y)
-            tower.place_tower(x, y)
+            if event.num == 1:
+                sniper_tower = Tower(self.canvas, 3, self.cell_size, colour="blue",
+                                     shooting_colour="cyan",
+                                     fire_rate=2000)
+                self.towers.append(sniper_tower)
+                self.tower_coordinates[sniper_tower] = (x, y)
+                sniper_tower.place_tower(x, y)
+            elif event.num == 3:
+                normal_tower = Tower(self.canvas, 3, self.cell_size,
+                                     tower_range=200,
+                                     fire_rate=1000)
+                self.towers.append(normal_tower)
+                self.tower_coordinates[normal_tower] = (x, y)
+                normal_tower.place_tower(x, y)
 
     def update_towers(self):
         for tower in self.towers:
             closest_circle = tower.find_closest_circle(self.circles)
 
-            if closest_circle:
-                # SHOOTING LOGIC HERE
-                # DECREASE ITS HEALTH UNTIL IT REACHES ZERO,
-                # THEN REMOVE IT FROM THE LIST OF CIRCLES AND CANVAS
-                damage_per_shot = 50
-                closest_circle.decrease_health(damage_per_shot)
+            if closest_circle and tower.can_shoot():
+                try:
+                    tower.shoot(closest_circle)
+                except AttributeError:
+                    continue  # The circle has been removed from the canvas, skip to next
 
-                if closest_circle.health <= 0:
-                    self.circles.remove(closest_circle)
-                    closest_circle.remove_circle()
-
-        delay_between_shots = 1000
+        delay_between_shots = 100  # Frequent updates required to handle different fire rates
         self.root.after(delay_between_shots, self.update_towers)
 
     def start_tower_updates(self):
