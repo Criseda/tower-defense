@@ -16,7 +16,6 @@ from tkinter import (Menu as TkMenu,
                      Canvas as TkCanvas,
                      messagebox as messagebox)
 from math import hypot
-from turtle import color
 # ---All functions go here---
 
 
