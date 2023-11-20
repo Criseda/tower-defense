@@ -35,7 +35,7 @@ route = read_coordinates_new('route.txt')
 
 class Tower:
 
-    def __init__(self, canvas, size, cell_size, fire_rate=1000, tower_range='inf', colour="red", shooting_colour="orange"):
+    def __init__(self, canvas, size, cell_size, fire_rate=1000, tower_range='inf', colour="red", shooting_colour="orange", dps=10):
         self.canvas = canvas
         self.size = size
         self.cell_size = cell_size
@@ -45,27 +45,31 @@ class Tower:
         self.fire_rate = fire_rate
         self.last_shot_time = 0
         self.tower_range = tower_range
+        self.tower_dps = dps
 
     def can_shoot(self):
         # Check if enough time has passed since the last shot
         current_time = time.time() * 1000  # Convert to milliseconds
-        return current_time - self.last_shot_time >= self.fire_rate
+        time_since_last_shot = current_time - self.last_shot_time
+
+        # Check if the time since the last shot is greater than or qual to the fire rate
+        return time_since_last_shot >= self.fire_rate
 
     def shoot(self, closest_circle):
         # SHOOTING LOGIC HERE
         # DECREASE ITS HEALTH UNTIL IT REACHES ZERO,
         # THEN REMOVE IT FROM THE LIST OF CIRCLES AND CANVAS
-        damage_per_shot = 20
+        damage_per_shot = self.tower_dps
 
         self.flash_shooting_colour()  # shoots
+
+        self.last_shot_time = time.time() * 1000  # Update the last shot time
 
         closest_circle.decrease_health(damage_per_shot)
 
         if closest_circle.health <= 0:
             self.circles.remove(closest_circle)
             closest_circle.remove_circle()
-
-        self.last_shot_time = time.time() * 1000  # Update the last shot time
 
     def flash_shooting_colour(self):
         # Flash the shooting colour for a short time
@@ -311,22 +315,25 @@ class Game:
 
         # Check if the square under the tower is brown or if there is already a tower placed
         if self.tower_placement_valid(x, y):
-            if event.num == 1:
+            if event.num == 1:  # Left click
                 sniper_tower = Tower(self.canvas, 3, self.cell_size, colour="blue",
                                      shooting_colour="cyan",
-                                     fire_rate=2000)
+                                     fire_rate=2000,
+                                     dps=50)
                 self.towers.append(sniper_tower)
                 self.tower_coordinates[sniper_tower] = (x, y)
                 sniper_tower.place_tower(x, y)
-            elif event.num == 3:
+            elif event.num == 3:  # Right click
                 normal_tower = Tower(self.canvas, 3, self.cell_size,
                                      tower_range=200,
-                                     fire_rate=1000)
+                                     fire_rate=500)
                 self.towers.append(normal_tower)
                 self.tower_coordinates[normal_tower] = (x, y)
                 normal_tower.place_tower(x, y)
 
     def update_towers(self):
+        delay_between_shots = 100  # Frequent updates required to handle different fire rates
+
         for tower in self.towers:
             closest_circle = tower.find_closest_circle(self.circles)
 
@@ -336,7 +343,6 @@ class Game:
                 except AttributeError:
                     continue  # The circle has been removed from the canvas, skip to next
 
-        delay_between_shots = 100  # Frequent updates required to handle different fire rates
         self.root.after(delay_between_shots, self.update_towers)
 
     def start_tower_updates(self):
