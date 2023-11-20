@@ -15,6 +15,7 @@ from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
                      Canvas as TkCanvas,
                      messagebox as messagebox)
+from math import hypot
 # ---All functions go here---
 
 
@@ -48,6 +49,24 @@ class Tower:
                                                   (y + self.size) *
                                                   self.cell_size,
                                                   fill="red")
+
+    def find_closest_circle(self, circles):
+        tower_x, tower_y = self.canvas.coords(
+            self.tower)[:2]  # Only unpack the first two values
+
+        closest_circle = None
+        min_distance = float('inf')
+
+        for circle in circles:
+            circle_x, circle_y = self.canvas.coords(
+                circle.circle)[:2]  # Only unpack the first two values
+            distance = hypot(circle_x - tower_x, circle_y - tower_y)
+
+            if distance < min_distance:
+                min_distance = distance
+                closest_circle = circle
+
+        return closest_circle
 
 
 class MovingCircle:
@@ -95,9 +114,6 @@ class MapGenerator:
         self.map = [[0 for _ in range(width)]
                     for _ in range(height)]  # Initialize the map
         self.path_coordinates = []  # To store the coordinates of the selected path
-
-        # Binding the left mouse click event to the canvas
-        # self.canvas.bind("<Button-1>", self.on_canvas_click)
 
     def get_path_coordinates(self):
 
@@ -200,6 +216,7 @@ class Game:
     def start_circles(self):
         # delay from circle to another
         self.create_circles_newnew(num_circles=5)
+        self.start_tower_updates()
         self.update_circles()
 
     def tower_placement_valid(self, x, y):
@@ -235,6 +252,22 @@ class Game:
             self.towers.append(tower)
             self.tower_coordinates[tower] = (x, y)
             tower.place_tower(x, y)
+
+    def update_towers(self):
+        for tower in self.towers:
+            closest_circle = tower.find_closest_circle(self.circles)
+
+            if closest_circle:
+                # SHOOTING LOGIC HERE
+                # DECREASE ITS HEALTH UNTIL IT REACHES ZERO,
+                # THEN REMOVE IT FROM THE LIST OF CIRCLES AND CANVAS
+                pass
+
+        delay_between_shots = 1000
+        self.root.after(delay_between_shots, self.update_towers)
+
+    def start_tower_updates(self):
+        self.update_towers()
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
