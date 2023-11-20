@@ -9,7 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-from os import path
+from os import close, path
 from tkinter import Tk
 from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
@@ -51,8 +51,7 @@ class Tower:
                                                   fill="red")
 
     def find_closest_circle(self, circles):
-        tower_x, tower_y = self.canvas.coords(
-            self.tower)[:2]  # Only unpack the first two values
+        tower_x, tower_y = self.canvas.coords(self.tower)[:2]
 
         closest_circle = None
         min_distance = float('inf')
@@ -70,19 +69,11 @@ class Tower:
 
 
 class MovingCircle:
-    """
-    A class that represents a moving circle on a canvas.
 
-    Attributes:
-    canvas (tkinter.Canvas): The canvas on which the circle is drawn.
-    radius (int): The radius of the circle.
-    circle (int): The ID of the circle on the canvas.
-    coordinates (list): A list of (x, y) coordinates that the circle will move to.
-    """
-
-    def __init__(self, canvas, radius=10):
+    def __init__(self, canvas, radius=10, health=100):
         self.canvas = canvas
         self.radius = radius
+        self.health = health
         self.circle = self.canvas.create_oval(
             0, 0, radius*2, radius*2, fill='black')
         self.current_coordinate_index = 0
@@ -99,6 +90,16 @@ class MovingCircle:
                 # Schedule next move
                 # 2nd delay might be redundant, removing it
                 self.canvas.after(delay, self.move_circle)
+
+    def decrease_health(self, damage):
+        self.health -= damage
+        if self.health <= 0:
+            self.remove_circle()
+
+    def remove_circle(self):
+        self.canvas.delete(self.circle)
+        self.canvas.update()
+        self.current_coordinate_index = 0
 
 
 class MapGenerator:
@@ -261,7 +262,12 @@ class Game:
                 # SHOOTING LOGIC HERE
                 # DECREASE ITS HEALTH UNTIL IT REACHES ZERO,
                 # THEN REMOVE IT FROM THE LIST OF CIRCLES AND CANVAS
-                pass
+                damage_per_shot = 50
+                closest_circle.decrease_health(damage_per_shot)
+
+                if closest_circle.health <= 0:
+                    self.circles.remove(closest_circle)
+                    closest_circle.remove_circle()
 
         delay_between_shots = 1000
         self.root.after(delay_between_shots, self.update_towers)
