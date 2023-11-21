@@ -113,12 +113,16 @@ class Tower:
 
 class MovingCircle:
 
-    def __init__(self, canvas, radius=10, health=100):
+    def __init__(self, canvas, radius=10, health=100, x=-100, y=-100):
+        # x, y = -100 to be out of sight
         self.canvas = canvas
         self.radius = radius
         self.health = health
-        self.circle = self.canvas.create_oval(
-            0, 0, radius*2, radius*2, fill='black')
+        self.circle = self.canvas.create_oval(x,
+                                              y,
+                                              x + radius * 2,
+                                              y + radius * 2,
+                                              fill='black')
         self.current_coordinate_index = 0
 
     def move_circle(self, delay=20):
@@ -126,8 +130,11 @@ class MovingCircle:
         if route:
             if self.current_coordinate_index < len(route):
                 x, y = route[self.current_coordinate_index]
-                self.canvas.coords(self.circle, x-self.radius,
-                                   y-self.radius, x+self.radius, y+self.radius)
+                self.canvas.coords(self.circle,
+                                   x,
+                                   y,
+                                   x+self.radius * 2,
+                                   y+self.radius * 2)
                 self.canvas.update()
                 self.current_coordinate_index += 1
 
