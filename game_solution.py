@@ -9,14 +9,14 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-from operator import is_
 import time
 from tkinter import Tk
 from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
                      Canvas as TkCanvas,
                      messagebox as messagebox,
-                     Button as TkButton)
+                     Button as TkButton,
+                     Label as TkLabel)
 from math import hypot
 # ---All functions go here---
 
@@ -173,10 +173,9 @@ class MovingCircle:
 
                 if self.current_coordinate_index == len(route):
                     # The circle has reached the end of the path, remove it
-                    # if self.circle in self.canvas.find_all():
-                    #     self.player.take_damage(20)
-                    #     self.remove_circle()
-                    pass
+                    if self.circle in self.canvas.find_all():
+                        self.player.take_damage(20)
+                        self.remove_circle()
                 else:
                     # Schedule next move
                     self.canvas.after(delay, self.move_circle)
@@ -280,6 +279,17 @@ class Game:
         self.selection_frame.pack(side='right')
         self.selection_frame.pack_propagate(0)
 
+        # Player info labels
+        self.score_label = TkLabel(
+            self.selection_frame, text="Score: 0", bg="gray")
+        self.score_label.pack(pady=5)
+        self.health_label = TkLabel(
+            self.selection_frame, text="Health: 100", bg="gray")
+        self.health_label.pack(pady=5)
+        self.money_label = TkLabel(
+            self.selection_frame, text="Money: 650", bg="gray")
+        self.money_label.pack(pady=5)
+
         # Tower selection buttons:
         button_width = 20
         button_height = 10
@@ -341,6 +351,12 @@ class Game:
         # TODO: Change this to retry or quit for later?
         self.root.destroy()
 
+    def update_player_info(self):
+        # Update player info labels
+        self.score_label.config(text=f"Score: {self.player.score}")
+        self.health_label.config(text=f"Health: {self.player.health}")
+        self.money_label.config(text=f"Money: {self.player.money}")
+
     def create_circles(self, num_circles):
         for _ in range(num_circles):
             circle = MovingCircle(self.canvas, player=self.player)
@@ -356,10 +372,14 @@ class Game:
                 self.game_over()
                 return
 
+            # Update player info
+            self.update_player_info()
+
             # Schedule the next update with a delay
             delay_between_circles = 400  # Adjust this value as needed
             self.root.after(delay_between_circles,
                             self.update_circles, circle_index + 1)
+
         else:
             # All circles have been moved, schedule the next update
             self.root.after(1000, self.update_circles)
@@ -394,6 +414,7 @@ class Game:
                         self.towers.append(basic_tower)
                         self.tower_coordinates[basic_tower] = (x, y)
                         basic_tower.place_tower(x, y)
+                        self.update_player_info()
                     case "sniper":
                         cost = 200
                         if not self.can_afford_tower(cost):
@@ -407,6 +428,7 @@ class Game:
                         self.towers.append(sniper_tower)
                         self.tower_coordinates[sniper_tower] = (x, y)
                         sniper_tower.place_tower(x, y)
+                        self.update_player_info()
                     case "machine_gun":
                         cost = 250
                         if not self.can_afford_tower(cost):
@@ -421,6 +443,7 @@ class Game:
                         self.towers.append(machine_gun_tower)
                         self.tower_coordinates[machine_gun_tower] = (x, y)
                         machine_gun_tower.place_tower(x, y)
+                        self.update_player_info()
                     case _:
                         print("No tower selected!")
 
@@ -450,6 +473,7 @@ class Game:
         if self.player.money >= cost:
             self.player.deduct_money(cost)
             print(f"Placed tower. Money: {self.player.money}")
+            self.update_player_info()
             return True
         else:
             print("You cannot afford this tower yet!")
