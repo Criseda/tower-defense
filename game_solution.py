@@ -14,7 +14,8 @@ from tkinter import Tk
 from tkinter import (Menu as TkMenu,
                      Frame as TkFrame,
                      Canvas as TkCanvas,
-                     messagebox as messagebox)
+                     messagebox as messagebox,
+                     Button as TkButton)
 from math import hypot
 # ---All functions go here---
 
@@ -32,9 +33,29 @@ def read_coordinates_new(filename):
 route = read_coordinates_new('route.txt')
 
 
+class Player:
+    def __init__(self, starting_money=650, starting_health=100):
+        self.money = starting_money
+        self.health = starting_health
+
+    def deduct_money(self, amount):
+        self.money -= amount
+
+    def add_money(self, amount):
+        self.money += amount
+
+    def take_damage(self, amount):
+        self.health -= amount
+
+    def is_game_over(self):
+        return self.health <= 0
+
+
 class Tower:
 
-    def __init__(self, canvas, size, cell_size, fire_rate=1000, tower_range='inf', colour="red", shooting_colour="orange", dps=10):
+    def __init__(self, canvas, size, cell_size,
+                 fire_rate=1000, tower_range='inf',
+                 colour="red", shooting_colour="orange", dps=10):
         self.canvas = canvas
         self.size = size
         self.cell_size = cell_size
@@ -231,15 +252,46 @@ class Game:
         self.towers = []
         self.tower_coordinates = {}
 
+        # this is the player
+        self.player = Player()
+
         # this is the frame that holds the canvas
         self.frame = TkFrame(self.root, width=1000, height=720, bg="blue")
         self.frame.pack(side='left')
+
+        # this is the frame that holds the buttons
+        self.selection_frame = TkFrame(self.root, width=280, height=720,
+                                       bg="gray")
+        self.selection_frame.pack(side='right')
+        self.selection_frame.pack_propagate(0)
+
+        # Tower selection buttons:
+        button_width = 20
+        button_height = 10
+
+        basic_tower_button = TkButton(self.selection_frame, text="Normal Tower",
+                                      command=lambda: self.select_tower(
+                                          "basic"),
+                                      width=button_width, height=button_height)
+        basic_tower_button.pack(pady=10)
+        sniper_tower_button = TkButton(self.selection_frame, text="Sniper Tower",
+                                       command=lambda: self.select_tower(
+                                           "sniper"),
+                                       width=button_width, height=button_height)
+        sniper_tower_button.pack(pady=10)
+        machine_gun_tower_button = TkButton(self.selection_frame, text="Machine Gun Tower",
+                                            command=lambda: self.select_tower(
+                                                "machine_gun"),
+                                            width=button_width, height=button_height)
+        machine_gun_tower_button.pack(pady=10)
+
+        # Variable to store the selected tower type:
+        self.selected_tower_type = None
 
         # this is the canvas that holds the map / circle
         self.canvas = TkCanvas(self.frame, width=1000, height=720, bg="white")
         self.canvas.pack()
 
-        self.canvas.bind("<Button-3>", self.place_tower)
         self.canvas.bind("<Button-1>", self.place_tower)
 
         self.menu = TkMenu(self.root)  # menu bar
@@ -268,7 +320,7 @@ class Game:
 
         self.root.mainloop()
 
-    def create_circles_newnew(self, num_circles):
+    def create_circles(self, num_circles):
         for _ in range(num_circles):
             circle = MovingCircle(self.canvas, self.cell_size//2)
             self.circles.append(circle)
@@ -288,9 +340,60 @@ class Game:
 
     def start_circles(self):
         # delay from circle to another
-        self.create_circles_newnew(num_circles=5)
+        self.create_circles(num_circles=5)
         self.start_tower_updates()
         self.update_circles()
+
+    def select_tower(self, tower_type):
+        # Set the selected tower type
+        self.selected_tower_type = tower_type
+
+    def place_tower(self, event):
+        # Calculate the grid coordinates based on the mouse click position
+        x = event.x // self.cell_size
+        y = event.y // self.cell_size
+
+        # Check if the square under the tower is brown or if there is already a tower placed
+        if self.tower_placement_valid(x, y):
+            if event.num == 1:  # Left click
+                match self.selected_tower_type:
+                    case "basic":
+                        cost = 170
+                        if not self.can_afford_tower(cost):
+                            return
+                        basic_tower = Tower(self.canvas, 3, self.cell_size,
+                                            tower_range=200,
+                                            fire_rate=1000)
+                        self.towers.append(basic_tower)
+                        self.tower_coordinates[basic_tower] = (x, y)
+                        basic_tower.place_tower(x, y)
+                    case "sniper":
+                        cost = 200
+                        if not self.can_afford_tower(cost):
+                            return
+                        sniper_tower = Tower(self.canvas, 3, self.cell_size,
+                                             colour="blue",
+                                             shooting_colour="cyan",
+                                             fire_rate=2000,
+                                             dps=30)
+                        self.towers.append(sniper_tower)
+                        self.tower_coordinates[sniper_tower] = (x, y)
+                        sniper_tower.place_tower(x, y)
+                    case "machine_gun":
+                        cost = 250
+                        if not self.can_afford_tower(cost):
+                            return
+                        machine_gun_tower = Tower(self.canvas, 3, self.cell_size,
+                                                  colour="yellow",
+                                                  shooting_colour="lime",
+                                                  tower_range=100,
+                                                  fire_rate=200,
+                                                  dps=5)
+                        self.towers.append(machine_gun_tower)
+                        self.tower_coordinates[machine_gun_tower] = (x, y)
+                        machine_gun_tower.place_tower(x, y)
+                    case _:
+                        print("No tower selected!")
 
     def tower_placement_valid(self, x, y):
         # Check if the square under the tower is brown or if there is already a tower placed
@@ -314,28 +417,13 @@ class Game:
 
         return True
 
-    def place_tower(self, event):
-        # Calculate the grid coordinates based on the mouse click position
-        x = event.x // self.cell_size
-        y = event.y // self.cell_size
-
-        # Check if the square under the tower is brown or if there is already a tower placed
-        if self.tower_placement_valid(x, y):
-            if event.num == 1:  # Left click
-                sniper_tower = Tower(self.canvas, 3, self.cell_size, colour="blue",
-                                     shooting_colour="cyan",
-                                     fire_rate=2000,
-                                     dps=50)
-                self.towers.append(sniper_tower)
-                self.tower_coordinates[sniper_tower] = (x, y)
-                sniper_tower.place_tower(x, y)
-            elif event.num == 3:  # Right click
-                normal_tower = Tower(self.canvas, 3, self.cell_size,
-                                     tower_range=200,
-                                     fire_rate=500)
-                self.towers.append(normal_tower)
-                self.tower_coordinates[normal_tower] = (x, y)
-                normal_tower.place_tower(x, y)
+    def can_afford_tower(self, cost):
+        if self.player.money >= cost:
+            self.player.deduct_money(cost)
+            return True
+        else:
+            print("You cannot afford this tower yet!")
+            return False
 
     def update_towers(self):
         delay_between_shots = 100  # Frequent updates required to handle different fire rates
@@ -374,7 +462,6 @@ def main():
     The main function of the game_solution module.
     """
     Game()
-    # create_smooth_path('middle.txt', 'middle_smooth.txt', steps=25)
 
 
 if __name__ == "__main__":
