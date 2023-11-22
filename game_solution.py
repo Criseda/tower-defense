@@ -35,9 +35,10 @@ route = read_coordinates_new('route.txt')
 
 
 class Player:
-    def __init__(self, starting_money=650, starting_health=100):
+    def __init__(self, starting_money=650, starting_health=100, score=0):
         self.money = starting_money
         self.health = starting_health
+        self.score = score
 
     def deduct_money(self, amount):
         self.money -= amount
@@ -47,6 +48,10 @@ class Player:
 
     def take_damage(self, amount):
         self.health -= amount
+        print(f"Circle got away! Player health: {self.health}")
+
+    def increase_score(self, amount):
+        self.score += amount
 
     def is_game_over(self):
         return self.health <= 0
@@ -90,8 +95,10 @@ class Tower:
         closest_circle.decrease_health(damage_per_shot)
 
         if closest_circle.health <= 0:
-            self.player.add_money(10)
-            print(f"Circle removed! Money: {self.player.money}")
+            self.player.add_money(20)  # EDIT PLAYER MONEY REWARD HERE
+            self.player.increase_score(100)  # EDIT PLAYER SCORE REWARD HERE
+            print(
+                f"Circle removed! Money: {self.player.money} Score: {self.player.score}")
             self.circles.remove(closest_circle)
             closest_circle.remove_circle()
 
@@ -166,7 +173,9 @@ class MovingCircle:
 
                 if self.current_coordinate_index == len(route):
                     # The circle has reached the end of the path, remove it
-                    # self.remove_circle()
+                    # if self.circle in self.canvas.find_all():
+                    #     self.player.take_damage(20)
+                    #     self.remove_circle()
                     pass
                 else:
                     # Schedule next move
@@ -326,6 +335,12 @@ class Game:
 
         self.root.mainloop()
 
+    def game_over(self):
+        messagebox.showinfo("Game Over", "Game Over!")
+        # Then do what you need to do for game over
+        # TODO: Change this to retry or quit for later?
+        self.root.destroy()
+
     def create_circles(self, num_circles):
         for _ in range(num_circles):
             circle = MovingCircle(self.canvas, player=self.player)
@@ -335,6 +350,11 @@ class Game:
         if circle_index < len(self.circles):
             # Move the circle
             self.circles[circle_index].move_circle()
+
+            # Check for game over
+            if self.player.is_game_over():
+                self.game_over()
+                return
 
             # Schedule the next update with a delay
             delay_between_circles = 400  # Adjust this value as needed
