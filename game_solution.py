@@ -9,6 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
+from operator import is_
 import time
 from tkinter import Tk
 from tkinter import (Menu as TkMenu,
@@ -53,9 +54,10 @@ class Player:
 
 class Tower:
 
-    def __init__(self, canvas, size, cell_size,
+    def __init__(self, canvas, size, cell_size, player,
                  fire_rate=1000, tower_range='inf',
                  colour="red", shooting_colour="orange", dps=10):
+        self.player = player
         self.canvas = canvas
         self.size = size
         self.cell_size = cell_size
@@ -88,6 +90,8 @@ class Tower:
         closest_circle.decrease_health(damage_per_shot)
 
         if closest_circle.health <= 0:
+            self.player.add_money(10)
+            print(f"Circle removed! Money: {self.player.money}")
             self.circles.remove(closest_circle)
             closest_circle.remove_circle()
 
@@ -134,11 +138,12 @@ class Tower:
 
 class MovingCircle:
 
-    def __init__(self, canvas, radius=10, health=100, x=-100, y=-100):
+    def __init__(self, canvas, player, radius=10, health=100, x=-100, y=-100):
         # x, y = -100 to be out of sight
         self.canvas = canvas
         self.radius = radius
         self.health = health
+        self.player = player
         self.circle = self.canvas.create_oval(x,
                                               y,
                                               x + radius * 2,
@@ -161,7 +166,8 @@ class MovingCircle:
 
                 if self.current_coordinate_index == len(route):
                     # The circle has reached the end of the path, remove it
-                    self.remove_circle()
+                    # self.remove_circle()
+                    pass
                 else:
                     # Schedule next move
                     self.canvas.after(delay, self.move_circle)
@@ -322,7 +328,7 @@ class Game:
 
     def create_circles(self, num_circles):
         for _ in range(num_circles):
-            circle = MovingCircle(self.canvas, self.cell_size//2)
+            circle = MovingCircle(self.canvas, player=self.player)
             self.circles.append(circle)
 
     def update_circles(self, circle_index=0):
@@ -362,6 +368,7 @@ class Game:
                         if not self.can_afford_tower(cost):
                             return
                         basic_tower = Tower(self.canvas, 3, self.cell_size,
+                                            player=self.player,
                                             tower_range=200,
                                             fire_rate=1000)
                         self.towers.append(basic_tower)
@@ -372,6 +379,7 @@ class Game:
                         if not self.can_afford_tower(cost):
                             return
                         sniper_tower = Tower(self.canvas, 3, self.cell_size,
+                                             player=self.player,
                                              colour="blue",
                                              shooting_colour="cyan",
                                              fire_rate=2000,
@@ -384,6 +392,7 @@ class Game:
                         if not self.can_afford_tower(cost):
                             return
                         machine_gun_tower = Tower(self.canvas, 3, self.cell_size,
+                                                  player=self.player,
                                                   colour="yellow",
                                                   shooting_colour="lime",
                                                   tower_range=100,
@@ -420,9 +429,11 @@ class Game:
     def can_afford_tower(self, cost):
         if self.player.money >= cost:
             self.player.deduct_money(cost)
+            print(f"Placed tower. Money: {self.player.money}")
             return True
         else:
             print("You cannot afford this tower yet!")
+            print(f"You need {cost - self.player.money} more money!")
             return False
 
     def update_towers(self):
