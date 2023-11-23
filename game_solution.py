@@ -358,7 +358,6 @@ class Game:
     def check_wave_completion(self):
         if self.circles:
             # Check again after a short delay
-            print(self.circles)  # debug
             self.root.after(100, self.check_wave_completion)
         else:
             # All circles have reached the end, start the new wave
