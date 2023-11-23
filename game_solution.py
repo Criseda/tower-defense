@@ -402,50 +402,49 @@ class Game:
         # Check if the square under the tower is brown or if there is already a tower placed
         if self.tower_placement_valid(x, y):
             if event.num == 1:  # Left click
-                match self.selected_tower_type:
-                    case "basic":
-                        cost = 170
-                        if not self.can_afford_tower(cost):
-                            return
-                        basic_tower = Tower(self.canvas, 3, self.cell_size,
-                                            player=self.player,
-                                            tower_range=200,
-                                            fire_rate=1000)
-                        self.towers.append(basic_tower)
-                        self.tower_coordinates[basic_tower] = (x, y)
-                        basic_tower.place_tower(x, y)
-                        self.update_player_info()
-                    case "sniper":
-                        cost = 200
-                        if not self.can_afford_tower(cost):
-                            return
-                        sniper_tower = Tower(self.canvas, 3, self.cell_size,
-                                             player=self.player,
-                                             colour="blue",
-                                             shooting_colour="cyan",
-                                             fire_rate=2000,
-                                             dps=30)
-                        self.towers.append(sniper_tower)
-                        self.tower_coordinates[sniper_tower] = (x, y)
-                        sniper_tower.place_tower(x, y)
-                        self.update_player_info()
-                    case "machine_gun":
-                        cost = 250
-                        if not self.can_afford_tower(cost):
-                            return
-                        machine_gun_tower = Tower(self.canvas, 3, self.cell_size,
-                                                  player=self.player,
-                                                  colour="yellow",
-                                                  shooting_colour="lime",
-                                                  tower_range=100,
-                                                  fire_rate=200,
-                                                  dps=5)
-                        self.towers.append(machine_gun_tower)
-                        self.tower_coordinates[machine_gun_tower] = (x, y)
-                        machine_gun_tower.place_tower(x, y)
-                        self.update_player_info()
-                    case _:
-                        print("No tower selected!")
+                if self.selected_tower_type == "basic":
+                    cost = 170
+                    if not self.can_afford_tower(cost):
+                        return
+                    basic_tower = Tower(self.canvas, 3, self.cell_size,
+                                        player=self.player,
+                                        tower_range=200,
+                                        fire_rate=1000)
+                    self.towers.append(basic_tower)
+                    self.tower_coordinates[basic_tower] = (x, y)
+                    basic_tower.place_tower(x, y)
+                    self.update_player_info()
+                elif self.selected_tower_type == "sniper":
+                    cost = 200
+                    if not self.can_afford_tower(cost):
+                        return
+                    sniper_tower = Tower(self.canvas, 3, self.cell_size,
+                                         player=self.player,
+                                         colour="blue",
+                                         shooting_colour="cyan",
+                                         fire_rate=2000,
+                                         dps=30)
+                    self.towers.append(sniper_tower)
+                    self.tower_coordinates[sniper_tower] = (x, y)
+                    sniper_tower.place_tower(x, y)
+                    self.update_player_info()
+                elif self.selected_tower_type == "machine_gun":
+                    cost = 250
+                    if not self.can_afford_tower(cost):
+                        return
+                    machine_gun_tower = Tower(self.canvas, 3, self.cell_size,
+                                              player=self.player,
+                                              colour="yellow",
+                                              shooting_colour="lime",
+                                              tower_range=100,
+                                              fire_rate=200,
+                                              dps=5)
+                    self.towers.append(machine_gun_tower)
+                    self.tower_coordinates[machine_gun_tower] = (x, y)
+                    machine_gun_tower.place_tower(x, y)
+                    self.update_player_info()
+                else:
+                    print("No tower selected!")
 
     def tower_placement_valid(self, x, y):
         # Check if the square under the tower is brown or if there is already a tower placed
