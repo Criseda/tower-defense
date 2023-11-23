@@ -9,6 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
+from operator import is_
 import time
 from tkinter import Tk
 from tkinter import (Menu as TkMenu,
@@ -276,7 +277,7 @@ class Game:
         # these are the waves
         self.current_wave = 0
         self.num_circles_per_wave = [5, 8, 12, 16, 20]
-        self.time_between_waves = 1000  # 10 seconds between waves
+        self.time_between_waves = 1000  # 1 second between waves
 
         # this is the frame that holds the canvas
         self.frame = TkFrame(self.root, width=1000, height=720, bg="blue")
@@ -361,6 +362,8 @@ class Game:
             self.root.after(100, self.check_wave_completion)
         else:
             # All circles have reached the end, start the new wave
+            if self.player.is_game_over():
+                self.game_over()
             self.root.after(self.time_between_waves, self.new_wave)
 
     def new_wave(self):
