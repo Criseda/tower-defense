@@ -145,12 +145,13 @@ class Tower:
 
 class MovingCircle:
 
-    def __init__(self, canvas, player, radius=10, health=100, x=-100, y=-100):
+    def __init__(self, canvas, player, game, radius=10, health=100, x=-100, y=-100):
         # x, y = -100 to be out of sight
         self.canvas = canvas
         self.radius = radius
         self.health = health
         self.player = player
+        self.game = game
         self.circle = self.canvas.create_oval(x,
                                               y,
                                               x + radius * 2,
@@ -199,6 +200,9 @@ class MovingCircle:
         self.canvas.delete(self.circle)
         self.canvas.update()
         self.current_coordinate_index = 0
+
+        if self in self.game.circles:
+            self.game.circles.remove(self)
 
     def decrease_health(self, damage):
         self.health -= damage
@@ -268,6 +272,11 @@ class Game:
 
         # this is the player
         self.player = Player()
+
+        # these are the waves
+        self.current_wave = 0
+        self.num_circles_per_wave = [5, 8, 12, 16, 20]
+        self.time_between_waves = 1000  # 10 seconds between waves
 
         # this is the frame that holds the canvas
         self.frame = TkFrame(self.root, width=1000, height=720, bg="blue")
@@ -345,8 +354,31 @@ class Game:
 
         self.root.mainloop()
 
+    def check_wave_completion(self):
+        if self.circles:
+            # Check again after a short delay
+            print(self.circles)  # debug
+            self.root.after(100, self.check_wave_completion)
+        else:
+            # All circles have reached the end, start the new wave
+            self.root.after(self.time_between_waves, self.new_wave)
+
+    def new_wave(self):
+        # Increment the wave counter
+        self.current_wave += 1
+        messagebox.showinfo(
+            "New Wave", f"Starting wave {self.current_wave}!")
+        # Create the circles for the current wave
+        num_circles = self.num_circles_per_wave[self.current_wave - 1]
+        self.create_circles(num_circles)
+
+        # Schedule the next wave if the player has not lost
+        if not self.player.is_game_over():
+            self.check_wave_completion()
+
     def game_over(self):
-        messagebox.showinfo("Game Over", "Game Over!")
+        messagebox.showinfo(
+            "Game Over", "Game Over!\nWaves Survived: {}".format(self.current_wave))
         # Then do what you need to do for game over
         # TODO: Change this to retry or quit for later?
         self.root.destroy()
@@ -359,7 +391,7 @@ class Game:
 
     def create_circles(self, num_circles):
         for _ in range(num_circles):
-            circle = MovingCircle(self.canvas, player=self.player)
+            circle = MovingCircle(self.canvas, player=self.player, game=self)
             self.circles.append(circle)
 
     def update_circles(self, circle_index=0):
@@ -386,7 +418,6 @@ class Game:
 
     def start_circles(self):
         # delay from circle to another
-        self.create_circles(num_circles=5)
         self.start_tower_updates()
         self.update_circles()
 
@@ -498,6 +529,7 @@ class Game:
 
     def new_game(self):
         messagebox.showinfo("New Game", "Starting a new game!")
+        self.new_wave()
 
     def save_game(self):
         messagebox.showinfo("Save Game", "Game saved!")
