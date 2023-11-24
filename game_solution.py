@@ -9,7 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-from operator import is_
+import json
 import time
 from tkinter import Tk
 from tkinter import (Menu as TkMenu,
@@ -62,7 +62,8 @@ class Tower:
 
     def __init__(self, canvas, size, cell_size, player,
                  fire_rate=1000, tower_range='inf',
-                 colour="red", shooting_colour="orange", dps=10):
+                 colour="red", shooting_colour="orange", dps=10,
+                 tower_type="basic"):
         self.player = player
         self.canvas = canvas
         self.size = size
@@ -74,6 +75,7 @@ class Tower:
         self.last_shot_time = 0
         self.tower_range = tower_range
         self.tower_dps = dps
+        self.tower_type = tower_type
 
     def can_shoot(self):
         # Check if enough time has passed since the last shot
@@ -442,7 +444,8 @@ class Game:
                     basic_tower = Tower(self.canvas, 3, self.cell_size,
                                         player=self.player,
                                         tower_range=200,
-                                        fire_rate=1000)
+                                        fire_rate=1000,
+                                        tower_type="basic")
                     self.towers.append(basic_tower)
                     self.tower_coordinates[basic_tower] = (x, y)
                     basic_tower.place_tower(x, y)
@@ -456,7 +459,8 @@ class Game:
                                          colour="blue",
                                          shooting_colour="cyan",
                                          fire_rate=2000,
-                                         dps=30)
+                                         dps=30,
+                                         tower_type="sniper")
                     self.towers.append(sniper_tower)
                     self.tower_coordinates[sniper_tower] = (x, y)
                     sniper_tower.place_tower(x, y)
@@ -471,7 +475,8 @@ class Game:
                                               shooting_colour="lime",
                                               tower_range=100,
                                               fire_rate=200,
-                                              dps=5)
+                                              dps=5,
+                                              tower_type="machine_gun")
                     self.towers.append(machine_gun_tower)
                     self.tower_coordinates[machine_gun_tower] = (x, y)
                     machine_gun_tower.place_tower(x, y)
@@ -534,9 +539,26 @@ class Game:
         self.new_wave()
 
     def save_game(self):
+        # save game logic here
+        save_data = {
+            'towers': [{'coordinates': tower_coordinates,
+                        'type': tower.tower_type} for tower,
+                       tower_coordinates in self.tower_coordinates.items()],
+            'player': {
+                'money': self.player.money,
+                'health': self.player.health,
+                'score': self.player.score,
+            },
+            'current_wave': self.current_wave,
+        }
+        
+        with open('save.json', 'w') as save_file:
+            json.dump(save_data, save_file)
+            
         messagebox.showinfo("Save Game", "Game saved!")
 
     def load_game(self):
+        # load game logic here
         messagebox.showinfo("Load Game", "Game loaded!")
 
     def about(self):
