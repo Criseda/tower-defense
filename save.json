@@ -1,1 +1,1 @@
-{"towers": [{"coordinates": [45, 11], "type": "basic"}, {"coordinates": [30, 5], "type": "sniper"}, {"coordinates": [16, 9], "type": "machine_gun"}], "player": {"money": 30, "health": 100, "score": 0}, "current_wave": 0}
+{"towers": [{"coordinates": [43, 7], "type": "basic"}, {"coordinates": [46, 24], "type": "basic"}, {"coordinates": [24, 13], "type": "basic"}], "player": {"money": 140, "health": 100, "score": 0}, "current_wave": 1}
