@@ -12,7 +12,10 @@ moving circles and the game itself.
 # TODO: fix issue where a new wave starts when you order a new game while another one is in progress
 #       is a new_game button necessary for the final game?
 # TODO: add a menu screen
-# TODO: add a game over screen
+# TODO: add a leaderboard (save the top 10 scores in a json file, display them on the leaderboard)
+#       to a the game over screen. User should be able to choose their initials that the score will become tied to.add()
+#       - if a user tries to enter initials that are already taken, display an error message
+#       - although if it is the same user they should be allowed to update their score if it is higher than their previous score posted? (maybe)
 # TODO: add a boss key, allow user to select what key to use for the boss key
 # TODO: add cheat keys, infinite money, infinite health, etc.
 # TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
