@@ -9,6 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
+# TODO: fix issue where a new wave starts when you order a new game while another one is in progress
 from email import message
 import json
 import time
@@ -545,21 +546,38 @@ class Game:
         if not self.game_in_progress:
             if self.current_wave == 0:
                 messagebox.showinfo("Game Started", "Game started!")
-                self.new_wave()
             elif self.current_wave > 0:
                 messagebox.showinfo("Game Started",
                                     f"Game resumed! Resuming from wave {self.current_wave + 1}")
-                self.new_wave()
             else:
                 messagebox.showinfo("Game Started", "Game started!")
-                self.new_wave()
-            self.game_in_progress = True
+            self.new_wave()
         else:
             messagebox.showinfo("Game Started", "Game already started!")
 
     def new_game(self):
+        # Reset game parameters
+        self.player.money = 650
+        self.player.health = 100
+        self.player.score = 0
+        self.current_wave = 0
+        self.game_in_progress = False
+
+        # Clear towers
+        for tower in self.towers:
+            self.canvas.delete(tower.tower)
+        self.towers = []
+        self.tower_coordinates = {}
+
+        # Clear circles
+        for circle in self.circles:
+            self.canvas.delete(circle.circle)
+        self.circles = []
+
+        # Update player info labels
+        self.update_player_info()
+
         messagebox.showinfo("New Game", "Starting a new game!")
-        self.new_wave()
 
     def save_game(self):
         # save game logic here
