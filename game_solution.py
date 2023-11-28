@@ -10,7 +10,16 @@ moving circles and the game itself.
 # tested on python 3.8.10
 # initial commit: 09-11-2023
 # TODO: fix issue where a new wave starts when you order a new game while another one is in progress
-from email import message
+#       is a new_game button necessary for the final game?
+# TODO: add a menu screen
+# TODO: add a game over screen
+# TODO: add a boss key, allow user to select what key to use for the boss key
+# TODO: add cheat keys, infinite money, infinite health, etc.
+# TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
+# TODO: show the currently selected tower type on the screen somewhere, once placed, set tower_type held in hand to None
+# TODO: create pixel art for the individual towers, initiate them with PIL
+# TODO: With PIL, create functionality to rotate the tower image to face the closest circle
+
 import json
 import time
 from tkinter import Tk
