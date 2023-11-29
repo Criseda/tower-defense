@@ -49,6 +49,101 @@ def read_coordinates_new(filename):
 route = read_coordinates_new('route.txt')
 
 
+class MainMenu:
+    def __init__(self, root, game):
+        self.root = root
+        self.game = game
+
+        # Main menu frame
+        self.main_menu_frame = TkFrame(root, bg="black")
+        self.main_menu_frame.place(relwidth=1, relheight=1)
+
+        # Title label
+        title_label = TkLabel(self.main_menu_frame, text="Tower Defense Game", font=(
+            "Helvetica", 20), fg="white", bg="black")
+        title_label.pack(pady=50)
+
+        # Buttons
+        new_game_button = TkButton(
+            self.main_menu_frame, text="New Game", command=self.start_new_game)
+        new_game_button.pack(pady=20)
+
+        load_game_button = TkButton(
+            self.main_menu_frame, text="Load Game", command=self.load_game)
+        load_game_button.pack(pady=20)
+
+        exit_button = TkButton(self.main_menu_frame,
+                               text="Exit", command=self.root.destroy)
+        exit_button.pack(pady=20)
+
+    def start_new_game(self):
+        # Hide the main menu
+        self.main_menu_frame.place_forget()
+
+        # Start a new game logic (replace with your game initialization logic)
+        # For demonstration, we'll print a message
+        print("Starting a new game!")
+
+    def load_game(self):
+        try:
+            # Load game logic here
+            # For demonstration, we'll print a message
+            print("Loading a saved game!")
+            # load game logic here
+
+            with open('save.json', 'r') as save_file:
+                save_data = json.load(save_file)
+            self.game.player.money = save_data['player']['money']
+            self.game.player.health = save_data['player']['health']
+            self.game.player.score = save_data['player']['score']
+            self.game.current_wave = save_data['current_wave'] - 1
+
+            for tower_info in save_data['towers']:
+                tower_type = tower_info['type']
+                tower_x, tower_y = tower_info['coordinates']
+
+                if tower_type == 'basic':
+                    tower = Tower(self.game.canvas, 3, self.game.cell_size,
+                                  player=self.game.player,
+                                  tower_range=200,
+                                  fire_rate=1000,
+                                  tower_type="basic")
+                elif tower_type == 'sniper':
+                    tower = Tower(self.game.canvas, 3, self.game.cell_size,
+                                  player=self.game.player,
+                                  colour="blue",
+                                  shooting_colour="cyan",
+                                  fire_rate=2000,
+                                  dps=30,
+                                  tower_type="sniper")
+                elif tower_type == 'machine_gun':
+                    tower = Tower(self.game.canvas, 3, self.game.cell_size,
+                                  player=self.game.player,
+                                  colour="yellow",
+                                  shooting_colour="lime",
+                                  tower_range=100,
+                                  fire_rate=200,
+                                  dps=5,
+                                  tower_type="machine_gun")
+                else:
+                    raise ValueError(f'Unknown tower type: {tower_type}')
+
+                self.game.towers.append(tower)
+                self.game.tower_coordinates[tower] = (tower_x, tower_y)
+                tower.place_tower(tower_x, tower_y)
+
+            self.game.update_player_info()
+
+            # Hide the main menu
+            self.main_menu_frame.place_forget()
+
+            messagebox.showinfo("Load Game", "Game loaded!")
+
+        except FileNotFoundError:
+            messagebox.showerror("Load Game", "No save file found!")
+            return
+
+
 class Player:
     def __init__(self, starting_money=650, starting_health=100, score=0):
         self.money = starting_money
@@ -347,6 +442,9 @@ class Game:
         self.canvas.pack()
 
         self.canvas.bind("<Button-1>", self.place_tower)
+
+        # Main menu screen
+        self.main_menu = MainMenu(self.root, self)
 
         self.menu = TkMenu(self.root)  # menu bar
         self.root.config(menu=self.menu)
