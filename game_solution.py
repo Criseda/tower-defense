@@ -9,9 +9,8 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-# TODO: fix issue where a new wave starts when you order a new game while another one is in progress
-#       is a new_game button necessary for the final game?
 # TODO: add a menu screen
+# TODO: check if the game starts properly once it is loaded
 # TODO: add a leaderboard (save the top 10 scores in a json file, display them on the leaderboard)
 #       to a the game over screen. User should be able to choose their initials that the score will become tied to.add()
 #       - if a user tries to enter initials that are already taken, display an error message
@@ -83,6 +82,7 @@ class MainMenu:
         # Start a new game logic (replace with your game initialization logic)
         # For demonstration, we'll print a message
         print("Starting a new game!")
+        messagebox.showinfo("New Game", "New Game!")
 
     def load_game(self):
         try:
@@ -418,6 +418,9 @@ class Game:
         button_width = 20
         button_height = 10
 
+        # Variable to store the selected tower type:
+        self.selected_tower_type = None
+
         basic_tower_button = TkButton(self.selection_frame, text="Normal Tower",
                                       command=lambda: self.select_tower(
                                           "basic"),
@@ -434,8 +437,11 @@ class Game:
                                             width=button_width, height=button_height)
         machine_gun_tower_button.pack(pady=10)
 
-        # Variable to store the selected tower type:
-        self.selected_tower_type = None
+        # Start game button
+        start_game_button = TkButton(self.selection_frame, text="Start Game",
+                                     command=lambda: self.start_game(),
+                                     width=button_width, height=button_height)
+        start_game_button.pack(pady=10)
 
         # this is the canvas that holds the map / circle
         self.canvas = TkCanvas(self.frame, width=1000, height=720, bg="white")
@@ -449,18 +455,12 @@ class Game:
         self.menu = TkMenu(self.root)  # menu bar
         self.root.config(menu=self.menu)
 
-        self.file_menu = TkMenu(self.menu, tearoff=0)  # file menu
-        self.file_menu.add_command(label="New Game", command=self.new_game)
-        self.file_menu.add_command(label="Save Game", command=self.save_game)
-        self.file_menu.add_command(label="Load Game", command=self.load_game)
-        self.menu.add_cascade(label="File", menu=self.file_menu)
-
-        self.help_menu = TkMenu(self.menu, tearoff=0)
-        self.help_menu.add_command(label="About", command=self.about)
-        self.menu.add_cascade(label="Help", menu=self.help_menu)
+        self.menu.add_command(label="Save Game", command=self.save_game)
 
         self.menu.add_command(label="Start Game",
                               command=self.start_game)  # start button
+
+        self.menu.add_command(label="About", command=self.about)
 
         self.menu.add_command(label="Exit program",
                               command=self.root.quit)  # exit button
@@ -653,6 +653,7 @@ class Game:
         self.update_towers()
 
     def start_game(self):
+        print(self.game_in_progress)  # DEBUGGING
         if not self.game_in_progress:
             if self.current_wave == 0:
                 messagebox.showinfo("Game Started", "Game started!")
@@ -660,34 +661,12 @@ class Game:
                 messagebox.showinfo("Game Started",
                                     f"Game resumed! Resuming from wave {self.current_wave + 1}")
             else:
-                messagebox.showinfo("Game Started", "Game started!")
+                messagebox.showinfo("Game Started", "Game started! (debug)")
+            self.game_in_progress = True
             self.new_wave()
         else:
-            messagebox.showinfo("Game Started", "Game already started!")
-
-    def new_game(self):
-        # Reset game parameters
-        self.player.money = 650
-        self.player.health = 100
-        self.player.score = 0
-        self.current_wave = 0
-        self.game_in_progress = False
-
-        # Clear towers
-        for tower in self.towers:
-            self.canvas.delete(tower.tower)
-        self.towers = []
-        self.tower_coordinates = {}
-
-        # Clear circles
-        for circle in self.circles:
-            self.canvas.delete(circle.circle)
-        self.circles = []
-
-        # Update player info labels
-        self.update_player_info()
-
-        messagebox.showinfo("New Game", "Starting a new game!")
+            # messagebox.showinfo("Game Started", "Game already started!") DEBUG
+            print("Game already started!")  # to not stop the game.
 
     def save_game(self):
         # save game logic here
@@ -707,58 +686,6 @@ class Game:
             json.dump(save_data, save_file)
 
         messagebox.showinfo("Save Game", "Game saved!")
-
-    def load_game(self):
-
-        try:
-            # load game logic here
-            with open('save.json', 'r') as save_file:
-                save_data = json.load(save_file)
-            self.player.money = save_data['player']['money']
-            self.player.health = save_data['player']['health']
-            self.player.score = save_data['player']['score']
-            self.current_wave = save_data['current_wave'] - 1
-
-            for tower_info in save_data['towers']:
-                tower_type = tower_info['type']
-                tower_x, tower_y = tower_info['coordinates']
-
-                if tower_type == 'basic':
-                    tower = Tower(self.canvas, 3, self.cell_size,
-                                  player=self.player,
-                                  tower_range=200,
-                                  fire_rate=1000,
-                                  tower_type="basic")
-                elif tower_type == 'sniper':
-                    tower = Tower(self.canvas, 3, self.cell_size,
-                                  player=self.player,
-                                  colour="blue",
-                                  shooting_colour="cyan",
-                                  fire_rate=2000,
-                                  dps=30,
-                                  tower_type="sniper")
-                elif tower_type == 'machine_gun':
-                    tower = Tower(self.canvas, 3, self.cell_size,
-                                  player=self.player,
-                                  colour="yellow",
-                                  shooting_colour="lime",
-                                  tower_range=100,
-                                  fire_rate=200,
-                                  dps=5,
-                                  tower_type="machine_gun")
-                else:
-                    raise ValueError(f'Unknown tower type: {tower_type}')
-
-                self.towers.append(tower)
-                self.tower_coordinates[tower] = (tower_x, tower_y)
-                tower.place_tower(tower_x, tower_y)
-
-            self.update_player_info()
-
-            messagebox.showinfo("Load Game", "Game loaded!")
-        except FileNotFoundError:
-            messagebox.showerror("Load Game", "No save file found!")
-            return
 
     def about(self):
         messagebox.showinfo("About", "Tower Defense Game by Your Name")
