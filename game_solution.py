@@ -30,7 +30,8 @@ from tkinter import (Menu as TkMenu,
                      Canvas as TkCanvas,
                      messagebox as messagebox,
                      Button as TkButton,
-                     Label as TkLabel)
+                     Label as TkLabel,
+                     Entry as TkEntry)
 from math import hypot
 # ---All functions go here---
 
@@ -46,6 +47,31 @@ def read_coordinates_new(filename):
 
 
 route = read_coordinates_new('route.txt')
+
+
+class Leaderboard:
+    def __init__(self, filename="leaderboard.json"):
+        self.filename = filename
+        self.scores = []
+
+    def load_leaderboard(self):
+        try:
+            with open(self.filename, "r") as file:
+                self.scores = json.load(file)
+        except FileNotFoundError:
+            self.scores = []
+
+    def save_leaderboard(self):
+        with open(self.filename, "w") as file:
+            json.dump(self.scores, file)
+
+    def add_score(self, initials, score):
+        self.scores.append({"initials": initials, "score": score})
+        self.scores.sort(key=lambda x: x["score"], reverse=True)
+        self.save_leaderboard()
+
+    def get_leaderboard(self):
+        return self.scores
 
 
 class MainMenu:
@@ -384,6 +410,8 @@ class Game:
 
         # this is the player
         self.player = Player()
+        # this is the leaderboard
+        self.leaderboard = Leaderboard()
 
         # variable to check if the game is in progress:
         self.game_in_progress = False
@@ -475,6 +503,48 @@ class Game:
 
         self.root.mainloop()
 
+    def show_game_over_screen(self):
+        # Display a new canvas/frame for entering initials
+        game_over_frame = TkFrame(self.root, width=400, height=200, bg="white")
+        game_over_frame.pack_propagate(0)
+        game_over_frame.place(x=400, y=260)
+
+        label = TkLabel(game_over_frame,
+                        text="Game Over!\nEnter Your Initials:")
+        label.pack(pady=10)
+
+        entry = TkEntry(game_over_frame)
+        entry.pack(pady=10)
+
+        submit_button = TkButton(
+            game_over_frame, text="Submit", command=lambda: self.submit_score(entry.get()))
+        submit_button.pack(pady=10)
+
+    def submit_score(self, initials):
+        # Add the player's score to the leaderboard
+        self.leaderboard.load_leaderboard()
+        self.leaderboard.add_score(initials, self.player.score)
+
+        # Display the leaderboard
+        self.display_leaderboard()
+
+    def display_leaderboard(self):
+        # Retrieve and display the leaderboard
+        leaderboard_frame = TkFrame(
+            self.root, width=400, height=400, bg="white")
+        leaderboard_frame.pack_propagate(0)
+        leaderboard_frame.place(x=400, y=260)
+
+        scores = self.leaderboard.get_leaderboard()
+
+        label = TkLabel(leaderboard_frame, text="Leaderboard:")
+        label.pack(pady=10)
+
+        for score in scores:
+            entry_label = TkLabel(
+                leaderboard_frame, text=f"{score['initials']}: {score['score']}")
+            entry_label.pack(pady=5)
+
     def check_wave_completion(self):
         if self.circles:
             # Check again after a short delay
@@ -503,7 +573,8 @@ class Game:
             "Game Over", "Game Over!\nWaves Survived: {}".format(self.current_wave))
         # Then do what you need to do for game over
         # TODO: Change this to retry or quit for later?
-        self.root.destroy()
+        # self.root.destroy()
+        self.show_game_over_screen()
 
     def update_player_info(self):
         # Update player info labels
