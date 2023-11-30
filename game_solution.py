@@ -16,7 +16,6 @@ moving circles and the game itself.
 # TODO: show the currently selected tower type on the screen somewhere, once placed, set tower_type held in hand to None
 # TODO: With PIL, create functionality to rotate the tower image to face the closest circle
 
-from email.mime import image
 import json
 import time
 from tkinter import Tk
@@ -29,7 +28,7 @@ from tkinter import (Menu as TkMenu,
                      Entry as TkEntry,
                      PhotoImage as PhotoImage)
 from PIL import Image, ImageTk
-from math import hypot, degrees, atan2
+from math import hypot, degrees, atan2, cos, sin
 # ---All functions go here---
 
 
@@ -299,12 +298,37 @@ class Tower:
         # Load tower images
         self.tower_images = {
             "basic": PhotoImage(file="basic.png"),
-            "basic_shoot": PhotoImage(file="basic_shoot.png"),
             "sniper": PhotoImage(file="sniper.png"),
-            "sniper_shoot": PhotoImage(file="sniper_shoot.png"),
             "machine_gun": PhotoImage(file="machine_gun.png"),
-            "machine_gun_shoot": PhotoImage(file="machine_gun_shoot.png"),
         }
+
+        self.barrel_line_tag = f"barrel_line_{id(self)}"
+
+    def rotate_tower_to_target(self, target):
+        tower_x, tower_y = self.canvas.coords(self.tower)[:2]
+        target_x, target_y = self.canvas.coords(target.circle)[:2]
+
+        # Calculate the angle between the tower and the target
+        angle_rad = atan2(target_y - tower_y, target_x - tower_x)
+        angle_deg = degrees(angle_rad)
+
+        # Set the length of the barrel line
+        barrel_length = 30  # Adjust the length as needed
+
+        # Calculate the end point of the line
+        line_end_x = tower_x + barrel_length * cos(angle_rad)
+        line_end_y = tower_y + barrel_length * sin(angle_rad)
+
+        # Draw the barrel line
+        self.canvas.delete(self.barrel_line_tag)  # Clear previous lines
+        self.canvas.create_line(tower_x, tower_y,
+                                line_end_x, line_end_y,
+                                tags=self.barrel_line_tag, width=10,
+                                fill="black")
+        self.canvas.create_line(tower_x, tower_y,
+                                line_end_x, line_end_y,
+                                tags=self.barrel_line_tag, width=8,
+                                fill="light gray")
 
     def place_image_tower(self, x, y):
         tower_image = self.tower_images[self.tower_type]
@@ -312,6 +336,7 @@ class Tower:
         if tower_image:
             tower_x = x * self.cell_size + self.cell_size // 2
             tower_y = y * self.cell_size + self.cell_size // 2
+
             self.tower = self.canvas.create_image(tower_x, tower_y,
                                                   image=tower_image,
                                                   anchor="center")
@@ -332,7 +357,8 @@ class Tower:
         # THEN REMOVE IT FROM THE LIST OF CIRCLES AND CANVAS
         damage_per_shot = self.tower_dps
 
-        self.flash_shooting_colour()  # shoots
+        # Flash the shooting colour
+        self.rotate_tower_to_target(closest_circle)  # shoots
 
         self.last_shot_time = time.time() * 1000  # Update the last shot time
 
@@ -345,16 +371,6 @@ class Tower:
                 f"Circle removed! Money: {self.player.money} Score: {self.player.score}")
             self.circles.remove(closest_circle)
             closest_circle.remove_circle()
-
-    def flash_shooting_colour(self):
-        # Flash the shooting colour for a short time
-        self.canvas.itemconfig(
-            self.tower, image=self.tower_images[f"{self.tower_type}_shoot"])
-        self.canvas.after(100, self.restore_tower_image)
-
-    def restore_tower_image(self):
-        self.canvas.itemconfig(self.tower,
-                               image=self.tower_images[self.tower_type])
 
     def place_tower(self, x, y):
 
