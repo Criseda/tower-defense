@@ -9,8 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-# TODO: rotate the circles to look at the closest circle that they can actively shoot.
-# TODO: when you load the game,
+# TODO: when you load the game, check if the tower images are placed properly
 # TODO: configure the leaderboard a little bit more
 # TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
 # TODO: show the currently selected tower type on the screen somewhere, once placed, set tower_type held in hand to None
