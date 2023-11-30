@@ -9,8 +9,6 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-# TODO: add a menu screen
-# TODO: check if the game starts properly once it is loaded
 # TODO: add a leaderboard (save the top 10 scores in a json file, display them on the leaderboard)
 #       to a the game over screen. User should be able to choose their initials that the score will become tied to.add()
 #       - if a user tries to enter initials that are already taken, display an error message
@@ -22,6 +20,8 @@ moving circles and the game itself.
 # TODO: create pixel art for the individual towers, initiate them with PIL
 # TODO: With PIL, create functionality to rotate the tower image to face the closest circle
 
+from cProfile import label
+from cgitb import text
 import json
 import time
 from tkinter import Tk
@@ -100,7 +100,90 @@ class MainMenu:
         exit_button = TkButton(self.main_menu_frame,
                                text="Exit", command=self.root.destroy)
         exit_button.pack(pady=20)
+        settings_buton = TkButton(self.main_menu_frame,
+                                  text="Settings", command=self.open_settings)
+        settings_buton.pack(pady=20)
 
+    def open_settings(self):
+        # Open the settings menu
+        settings_window = Tk()
+        settings_window.title("Settings")
+        settings_window.geometry("300x150")
+        settings_window.resizable(False, False)
+        
+        #Create input fields for cheat/boss keys
+        cheat_money_label = TkLabel(settings_window,
+                                    text=f"Cheat Money Key: {self.game.cheat_money_key.upper()}")
+        cheat_money_label.pack()
+        cheat_money_label.bind("<Button-1>",
+                               lambda event: self.change_key(event, "money"))
+        cheat_money_label.focus_set()
+        
+        cheat_health_label = TkLabel(settings_window,
+                                     text=f"Cheat Health Key: {self.game.cheat_health_key.upper()}")
+        cheat_health_label.pack()
+        cheat_health_label.bind("<Button-1>",
+                                lambda event: self.change_key(event, "health"))
+        cheat_health_label.focus_set()
+        
+        boss_label = TkLabel(settings_window,
+                             text=f"Boss Key: {self.game.boss_key.upper()}")
+        boss_label.pack()
+        boss_label.bind("<Button-1>",
+                        lambda event: self.change_key(event, "boss"))
+        boss_label.focus_set()
+        
+        # Exit button
+        exit_button = TkButton(settings_window, text="Exit",
+                               command=settings_window.destroy)
+        exit_button.pack(pady=20)
+        
+        # Run the settings window
+        settings_window.mainloop()
+ 
+    def change_key(self, event, key_type):
+        # Display "Enter key" and wait for user input
+        original_text = event.widget.cget("text")
+        
+        def on_key_press(event):
+            pressed_key = event.char.lower() if event.char else event.keysym
+            if ord(pressed_key) == 27: # Escape key
+                label.config(text=original_text)
+            elif pressed_key not in self.get_assigned_keys():
+                self.update_key(event, label, key_type)
+            else:
+                label.config(text=f"Cheat {key_type} key: {pressed_key.upper()} is already assigned!")
+            label.unbind("<Key>")
+            label.unbind("<FocusOut>")
+        
+        label = event.widget
+        label.config(text=f"Cheat {key_type} key: Enter key")
+        label.bind("<Key>", on_key_press)
+        label.bind("<FocusOut>", lambda event: label.unbind("<Key>"))
+        label.focus_set()
+    
+    def get_assigned_keys(self):
+        # Get a list of keys that have already been assigned
+        assigned_keys = [
+            self.game.cheat_money_key,
+            self.game.cheat_health_key,
+            self.game.boss_key
+        ]
+        
+        return [key.lower() for key in assigned_keys if key]
+        
+    def update_key(self, event, label, key_type):
+        # Update the label with the pressed key
+        pressed_key = event.char.lower()
+        if pressed_key and len(pressed_key) == 1:
+            label.config(text=f"Cheat {key_type} key: {pressed_key.upper()}")
+            if key_type == "money":
+                self.game.cheat_money_key = pressed_key
+            elif key_type == "health":
+                self.game.cheat_health_key = pressed_key
+            elif key_type == "boss":
+                self.game.boss_key = pressed_key
+        
     def start_new_game(self):
         # Hide the main menu
         self.main_menu_frame.place_forget()
@@ -412,6 +495,10 @@ class Game:
         self.player = Player()
         # this is the leaderboard
         self.leaderboard = Leaderboard()
+        
+        self.cheat_money_key = 'c'  # Default cheat money key
+        self.cheat_health_key = 'v'  # Default cheat health key
+        self.boss_key = 'b'  # Default boss key
 
         # variable to check if the game is in progress:
         self.game_in_progress = False
