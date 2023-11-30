@@ -9,9 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-# TODO: you need to fix the pyimage1 error when pressing the boss key. Check website for more info.
 # TODO: configure the leaderboard a little bit more
-# TODO: boss key
 # TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
 # TODO: show the currently selected tower type on the screen somewhere, once placed, set tower_type held in hand to None
 # TODO: create pixel art for the individual towers, initiate them with PIL
@@ -499,7 +497,11 @@ class Game:
         self.cheat_money_key = 'c'  # Default cheat money key
         self.cheat_health_key = 'v'  # Default cheat health key
         self.boss_key = 'b'  # Default boss key
-        self.boss_window = None  # Boss window
+
+        # Load the boss image
+        boss_img = Image.open("important_document_cropped.jpg")
+        boss_img = boss_img.resize((1280, 720), Image.LANCZOS)
+        self.boss_image = ImageTk.PhotoImage(boss_img)
 
         self.root.bind("<Key>", self.cheat_handler)  # Cheat handler
 
@@ -583,6 +585,20 @@ class Game:
         self.menu.add_command(label="Exit program",
                               command=self.root.quit)  # exit button
 
+        # Boss frame
+        self.boss_frame = TkFrame(self.root,
+                                  width=1280,
+                                  height=720,
+                                  bg="white")
+        self.boss_frame.pack_propagate(0)  # Don't let it shrink
+        # Boss canvas
+        self.boss_canvas = TkCanvas(self.boss_frame,
+                                    width=1280,
+                                    height=720,
+                                    bg="white")
+        self.boss_canvas.create_image(0, 0, image=self.boss_image, anchor="nw")
+        self.boss_canvas.pack()
+
         # Create and display the map
         self.map_generator = MapGenerator(
             self.canvas, 50, 36, cell_size=self.cell_size)
@@ -605,39 +621,15 @@ class Game:
             print(f"Cheat activated! Health: {self.player.health}")
             self.update_player_info()
         elif pressed_key == self.boss_key:
-            if self.boss_window:
-                self.close_boss_window()
-            else:
-                self.open_boss_window()
+            self.toggle_boss_frame()
         else:
             print(f"Unknown key: {pressed_key}")
 
-    def open_boss_window(self):
-        # Create a fullscreen window to display the pdf
-        self.boss_window = Tk()
-        self.boss_window.title("Very important pdf")
-        self.boss_window.geometry("1280x720")
-        self.boss_window.resizable(False, False)
-
-        # Create a canvas to display the pdf
-        boss_canvas = TkCanvas(self.boss_window, width=1280, height=720)
-        boss_canvas.pack()
-
-        # Insert pdf image here
-        img = Image.open("important_document.jpg")
-        img = img.resize((1280, 720), Image.LANCZOS)
-        img = ImageTk.PhotoImage(img)
-        boss_canvas.create_image(0, 0, anchor="nw", image=img)
-        boss_canvas.image = img  # Keep a reference to the image to prevent garbage collection
-
-        self.boss_window.bind(
-            "<Escape>", lambda event: self.close_boss_window())
-
-    def close_boss_window(self):
-        # Destroy the boss window
-        if self.boss_window is not None:
-            self.boss_window.destroy()
-            self.boss_window = None
+    def toggle_boss_frame(self):
+        if self.boss_frame.winfo_ismapped():
+            self.boss_frame.place_forget()
+        else:
+            self.boss_frame.place(x=0, y=0)
 
     def show_game_over_screen(self):
         # Display a new canvas/frame for entering initials
