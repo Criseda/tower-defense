@@ -9,12 +9,14 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
+# TODO: rotate the circles to look at the closest circle that they can actively shoot.
+# TODO: when you load the game,
 # TODO: configure the leaderboard a little bit more
 # TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
 # TODO: show the currently selected tower type on the screen somewhere, once placed, set tower_type held in hand to None
-# TODO: create pixel art for the individual towers, initiate them with PIL
 # TODO: With PIL, create functionality to rotate the tower image to face the closest circle
 
+from email.mime import image
 import json
 import time
 from tkinter import Tk
@@ -24,9 +26,10 @@ from tkinter import (Menu as TkMenu,
                      messagebox as messagebox,
                      Button as TkButton,
                      Label as TkLabel,
-                     Entry as TkEntry)
+                     Entry as TkEntry,
+                     PhotoImage as PhotoImage)
 from PIL import Image, ImageTk
-from math import hypot
+from math import hypot, degrees, atan2
 # ---All functions go here---
 
 
@@ -293,6 +296,44 @@ class Tower:
         self.tower_dps = dps
         self.tower_type = tower_type
 
+        # Load tower images
+        self.tower_images = {
+            "basic": PhotoImage(file="basic_tower.png"),
+            "basic_shoot": PhotoImage(file="basic_tower_shoot.png"),
+            "sniper": PhotoImage(file="sniper_tower.png"),
+            "sniper_shoot": PhotoImage(file="sniper_tower_shoot.png"),
+            "machine_gun": PhotoImage(file="machine_gun.png"),
+            "machine_gun_shoot": PhotoImage(file="machine_gun_shoot.png"),
+        }
+
+    def rotate_tower(self, target_x, target_y):
+        # Rotate the tower to face the closest circle
+        tower_x, tower_y = self.canvas.coords(self.tower)[:2]
+        angle = degrees(atan2(target_y - tower_y, target_x - tower_x))
+        tower_image = self.tower_images[self.tower_type]
+        rotated_image = self.rotate_image(tower_image, angle)
+
+        # Update the tower image on the canvas
+        self.canvas.itemconfig(self.tower, image=rotated_image)
+
+    def rotate_image(self, image, angle):
+        # Rotate the image and return the rotated images
+        pil_image = Image.open(image)
+        rotated_image = pil_image.rotate(angle)
+        return ImageTk.PhotoImage(rotated_image)
+
+    def place_image_tower(self, x, y):
+        tower_image = self.tower_images[self.tower_type]
+
+        if tower_image:
+            tower_x = x * self.cell_size + self.cell_size // 2
+            tower_y = y * self.cell_size + self.cell_size // 2
+            self.tower = self.canvas.create_image(tower_x, tower_y,
+                                                  image=tower_image,
+                                                  anchor="center")
+        else:
+            self.place_tower(x, y)
+
     def can_shoot(self):
         # Check if enough time has passed since the last shot
         current_time = time.time() * 1000  # Convert to milliseconds
@@ -323,10 +364,31 @@ class Tower:
 
     def flash_shooting_colour(self):
         # Flash the shooting colour for a short time
-        self.canvas.itemconfig(self.tower, fill=self.shooting_colour)
-        self.canvas.after(100, self.restore_tower_colour)
+        if self.tower_type == "basic":
+            self.canvas.itemconfig(
+                self.tower, image=self.tower_images["basic_shoot"])
+        elif self.tower_type == "sniper":
+            self.canvas.itemconfig(
+                self.tower, image=self.tower_images["sniper_shoot"])
+        elif self.tower_type == "machine_gun":
+            self.canvas.itemconfig(
+                self.tower, image=self.tower_images["machine_gun_shoot"])
+        # self.canvas.itemconfig(self.tower, fill=self.shooting_colour) DELETE THIS
+        # self.canvas.after(100, self.restore_tower_colour) DELETE THIS
+        self.canvas.after(100, self.restore_tower_image)
 
-    def restore_tower_colour(self):
+    def restore_tower_image(self):
+        if self.tower_type == "basic":
+            self.canvas.itemconfig(
+                self.tower, image=self.tower_images["basic"])
+        elif self.tower_type == "sniper":
+            self.canvas.itemconfig(
+                self.tower, image=self.tower_images["sniper"])
+        elif self.tower_type == "machine_gun":
+            self.canvas.itemconfig(
+                self.tower, image=self.tower_images["machine_gun"])
+
+    def restore_tower_colour(self):  # THIS IS LEGACY, YOU CAN REMOVE
         # Restore the tower colour to its original colour
         self.canvas.itemconfig(self.tower, fill=self.init_colour)
 
@@ -768,7 +830,8 @@ class Game:
                                         tower_type="basic")
                     self.towers.append(basic_tower)
                     self.tower_coordinates[basic_tower] = (x, y)
-                    basic_tower.place_tower(x, y)
+                    # basic_tower.place_tower(x, y) DEBUGGING
+                    basic_tower.place_image_tower(x, y)  # NEW CODE
                     self.update_player_info()
                 elif self.selected_tower_type == "sniper":
                     cost = 200
@@ -783,7 +846,8 @@ class Game:
                                          tower_type="sniper")
                     self.towers.append(sniper_tower)
                     self.tower_coordinates[sniper_tower] = (x, y)
-                    sniper_tower.place_tower(x, y)
+                    # sniper_tower.place_tower(x, y) DEBUGGING
+                    sniper_tower.place_image_tower(x, y)  # NEW CODE
                     self.update_player_info()
                 elif self.selected_tower_type == "machine_gun":
                     cost = 250
@@ -799,7 +863,8 @@ class Game:
                                               tower_type="machine_gun")
                     self.towers.append(machine_gun_tower)
                     self.tower_coordinates[machine_gun_tower] = (x, y)
-                    machine_gun_tower.place_tower(x, y)
+                    # machine_gun_tower.place_tower(x, y)
+                    machine_gun_tower.place_image_tower(x, y)  # NEW CODE
                     self.update_player_info()
                 else:
                     print("No tower selected!")
