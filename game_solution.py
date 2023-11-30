@@ -568,27 +568,46 @@ class Game:
         self.money_label = TkLabel(
             self.selection_frame, text="Money: 650", bg="gray")
         self.money_label.pack(pady=5)
+        self.selected_tower_label = TkLabel(
+            self.selection_frame, text="Selected Tower: None", bg="gray")
+        self.selected_tower_label.pack(pady=5)
 
         # Tower selection buttons:
-        button_width = 20
-        button_height = 10
+        button_width = 100
+        button_height = 120
 
         # Variable to store the selected tower type:
         self.selected_tower_type = None
 
-        basic_tower_button = TkButton(self.selection_frame, text="Normal Tower",
+        self.basic_tower_price = 170
+        basic_tower_image = PhotoImage(file="basic.png")
+        basic_tower_button = TkButton(self.selection_frame,
+                                      text=f"Normal Tower\nPrice: {self.basic_tower_price}",
                                       command=lambda: self.select_tower(
                                           "basic"),
-                                      width=button_width, height=button_height)
+                                      image=basic_tower_image,
+                                      compound="top",
+                                      width=button_width,
+                                      height=button_height)
         basic_tower_button.pack(pady=10)
-        sniper_tower_button = TkButton(self.selection_frame, text="Sniper Tower",
+        self.sniper_tower_price = 200
+        sniper_tower_image = PhotoImage(file="sniper.png")
+        sniper_tower_button = TkButton(self.selection_frame,
+                                       text=f"Sniper Tower\nPrice: {self.sniper_tower_price}",
                                        command=lambda: self.select_tower(
                                            "sniper"),
+                                       image=sniper_tower_image,
+                                       compound="top",
                                        width=button_width, height=button_height)
         sniper_tower_button.pack(pady=10)
-        machine_gun_tower_button = TkButton(self.selection_frame, text="Machine Gun Tower",
+        self.machine_gun_tower_price = 200
+        machine_gun_tower_image = PhotoImage(file="machine_gun.png")
+        machine_gun_tower_button = TkButton(self.selection_frame,
+                                            text=f"Machine Gun\nPrice: {self.machine_gun_tower_price}",
                                             command=lambda: self.select_tower(
                                                 "machine_gun"),
+                                            image=machine_gun_tower_image,
+                                            compound="top",
                                             width=button_width, height=button_height)
         machine_gun_tower_button.pack(pady=10)
 
@@ -596,7 +615,7 @@ class Game:
         start_game_button = TkButton(self.selection_frame, text="Start Game",
                                      command=lambda: self.start_game(),
                                      width=button_width, height=button_height)
-        start_game_button.pack(pady=10)
+        start_game_button.pack(pady=60, padx=50)
 
         # this is the canvas that holds the map / circle
         self.canvas = TkCanvas(self.frame, width=1000, height=720, bg="white")
@@ -783,6 +802,9 @@ class Game:
     def select_tower(self, tower_type):
         # Set the selected tower type
         self.selected_tower_type = tower_type
+        # Update the label to show the selected tower
+        self.selected_tower_label.config(
+            text=f"Selected Tower: {tower_type.title()}")
 
     def place_tower(self, event):
         # Calculate the grid coordinates based on the mouse click position
@@ -793,7 +815,7 @@ class Game:
         if self.tower_placement_valid(x, y):
             if event.num == 1:  # Left click
                 if self.selected_tower_type == "basic":
-                    cost = 170
+                    cost = self.basic_tower_price
                     if not self.can_afford_tower(cost):
                         return
                     basic_tower = Tower(self.canvas, 3, self.cell_size,
@@ -806,7 +828,7 @@ class Game:
                     basic_tower.place_image_tower(x, y)
                     self.update_player_info()
                 elif self.selected_tower_type == "sniper":
-                    cost = 200
+                    cost = self.sniper_tower_price
                     if not self.can_afford_tower(cost):
                         return
                     sniper_tower = Tower(self.canvas, 3, self.cell_size,
@@ -821,7 +843,7 @@ class Game:
                     sniper_tower.place_image_tower(x, y)
                     self.update_player_info()
                 elif self.selected_tower_type == "machine_gun":
-                    cost = 250
+                    cost = self.machine_gun_tower_price
                     if not self.can_afford_tower(cost):
                         return
                     machine_gun_tower = Tower(self.canvas, 3, self.cell_size,
