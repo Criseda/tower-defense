@@ -9,19 +9,13 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-# TODO: add a leaderboard (save the top 10 scores in a json file, display them on the leaderboard)
-#       to a the game over screen. User should be able to choose their initials that the score will become tied to.add()
-#       - if a user tries to enter initials that are already taken, display an error message
-#       - although if it is the same user they should be allowed to update their score if it is higher than their previous score posted? (maybe)
-# TODO: add a boss key, allow user to select what key to use for the boss key
-# TODO: add cheat keys, infinite money, infinite health, etc.
+# TODO: configure the leaderboard a little bit more
+# TODO: boss key
 # TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
 # TODO: show the currently selected tower type on the screen somewhere, once placed, set tower_type held in hand to None
 # TODO: create pixel art for the individual towers, initiate them with PIL
 # TODO: With PIL, create functionality to rotate the tower image to face the closest circle
 
-from cProfile import label
-from cgitb import text
 import json
 import time
 from tkinter import Tk
@@ -264,6 +258,9 @@ class Player:
 
     def add_money(self, amount):
         self.money += amount
+        
+    def add_health(self, amount):
+        self.health += amount
 
     def take_damage(self, amount):
         self.health -= amount
@@ -499,6 +496,7 @@ class Game:
         self.cheat_money_key = 'c'  # Default cheat money key
         self.cheat_health_key = 'v'  # Default cheat health key
         self.boss_key = 'b'  # Default boss key
+        self.root.bind("<Key>", self.cheat_handler) # Cheat handler
 
         # variable to check if the game is in progress:
         self.game_in_progress = False
@@ -589,6 +587,20 @@ class Game:
         self.start_circles()
 
         self.root.mainloop()
+    
+    def cheat_handler(self, event):
+        # Handle cheat keys
+        pressed_key = event.char.lower() if event.char else event.keysym
+        if pressed_key == self.cheat_money_key:
+            self.player.add_money(100)
+            print(f"Cheat activated! Money: {self.player.money}")
+            self.update_player_info()
+        elif pressed_key == self.cheat_health_key:
+            self.player.add_health(100)
+            print(f"Cheat activated! Health: {self.player.health}")
+            self.update_player_info()
+        else:
+            print(f"Unknown key: {pressed_key}")
 
     def show_game_over_screen(self):
         # Display a new canvas/frame for entering initials
