@@ -306,22 +306,6 @@ class Tower:
             "machine_gun_shoot": PhotoImage(file="machine_gun_shoot.png"),
         }
 
-    def rotate_tower(self, target_x, target_y):
-        # Rotate the tower to face the closest circle
-        tower_x, tower_y = self.canvas.coords(self.tower)[:2]
-        angle = degrees(atan2(target_y - tower_y, target_x - tower_x))
-        tower_image = self.tower_images[self.tower_type]
-        rotated_image = self.rotate_image(tower_image, angle)
-
-        # Update the tower image on the canvas
-        self.canvas.itemconfig(self.tower, image=rotated_image)
-
-    def rotate_image(self, image, angle):
-        # Rotate the image and return the rotated images
-        pil_image = Image.open(image)
-        rotated_image = pil_image.rotate(angle)
-        return ImageTk.PhotoImage(rotated_image)
-
     def place_image_tower(self, x, y):
         tower_image = self.tower_images[self.tower_type]
 
@@ -364,26 +348,13 @@ class Tower:
 
     def flash_shooting_colour(self):
         # Flash the shooting colour for a short time
-        if self.tower_type == "basic":
-            self.canvas.itemconfig(
-                self.tower, image=self.tower_images["basic_shoot"])
-        elif self.tower_type == "sniper":
-            self.canvas.itemconfig(
-                self.tower, image=self.tower_images["sniper_shoot"])
-        elif self.tower_type == "machine_gun":
-            self.canvas.itemconfig(
-                self.tower, image=self.tower_images["machine_gun_shoot"])
-        # self.canvas.itemconfig(self.tower, fill=self.shooting_colour) DELETE THIS
-        # self.canvas.after(100, self.restore_tower_colour) DELETE THIS
+        self.canvas.itemconfig(
+            self.tower, image=self.tower_images[f"{self.tower_type}_shoot"])
         self.canvas.after(100, self.restore_tower_image)
 
     def restore_tower_image(self):
         self.canvas.itemconfig(self.tower,
                                image=self.tower_images[self.tower_type])
-
-    def restore_tower_colour(self):  # THIS IS LEGACY, YOU CAN REMOVE
-        # Restore the tower colour to its original colour
-        self.canvas.itemconfig(self.tower, fill=self.init_colour)
 
     def place_tower(self, x, y):
 
