@@ -9,7 +9,10 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-# TODO: configure the leaderboard a little bit more
+# TODO: use pylint to improve code quality
+# TODO: add docstrings for classes and functions
+# TODO: update 'about' section
+# TODO: remove debugs or redundant functions/code
 
 import json
 import time
