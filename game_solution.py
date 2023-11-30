@@ -9,11 +9,9 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
-# TODO: when you load the game, check if the tower images are placed properly
 # TODO: configure the leaderboard a little bit more
 # TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
 # TODO: show the currently selected tower type on the screen somewhere, once placed, set tower_type held in hand to None
-# TODO: With PIL, create functionality to rotate the tower image to face the closest circle
 
 import json
 import time
@@ -207,6 +205,12 @@ class MainMenu:
                 tower_type = tower_info['type']
                 tower_x, tower_y = tower_info['coordinates']
 
+                tower_images = {
+                    "basic": PhotoImage(file="basic.png"),
+                    "sniper": PhotoImage(file="sniper.png"),
+                    "machine_gun": PhotoImage(file="machine_gun.png"),
+                }
+
                 if tower_type == 'basic':
                     tower = Tower(self.game.canvas, 3, self.game.cell_size,
                                   player=self.game.player,
@@ -235,7 +239,7 @@ class MainMenu:
 
                 self.game.towers.append(tower)
                 self.game.tower_coordinates[tower] = (tower_x, tower_y)
-                tower.place_tower(tower_x, tower_y)
+                tower.place_image_tower(tower_x, tower_y)
 
             self.game.update_player_info()
 
@@ -340,7 +344,7 @@ class Tower:
                                                   image=tower_image,
                                                   anchor="center")
         else:
-            self.place_tower(x, y)
+            print("No tower image found!")
 
     def can_shoot(self):
         # Check if enough time has passed since the last shot
@@ -370,16 +374,6 @@ class Tower:
                 f"Circle removed! Money: {self.player.money} Score: {self.player.score}")
             self.circles.remove(closest_circle)
             closest_circle.remove_circle()
-
-    def place_tower(self, x, y):
-
-        self.tower = self.canvas.create_rectangle(x * self.cell_size,
-                                                  y * self.cell_size,
-                                                  (x + self.size) *
-                                                  self.cell_size,
-                                                  (y + self.size) *
-                                                  self.cell_size,
-                                                  fill=self.init_colour)
 
     def find_closest_circle(self, circles):
         tower_x, tower_y = self.canvas.coords(self.tower)[:2]
@@ -809,8 +803,7 @@ class Game:
                                         tower_type="basic")
                     self.towers.append(basic_tower)
                     self.tower_coordinates[basic_tower] = (x, y)
-                    # basic_tower.place_tower(x, y) DEBUGGING
-                    basic_tower.place_image_tower(x, y)  # NEW CODE
+                    basic_tower.place_image_tower(x, y)
                     self.update_player_info()
                 elif self.selected_tower_type == "sniper":
                     cost = 200
@@ -825,8 +818,7 @@ class Game:
                                          tower_type="sniper")
                     self.towers.append(sniper_tower)
                     self.tower_coordinates[sniper_tower] = (x, y)
-                    # sniper_tower.place_tower(x, y) DEBUGGING
-                    sniper_tower.place_image_tower(x, y)  # NEW CODE
+                    sniper_tower.place_image_tower(x, y)
                     self.update_player_info()
                 elif self.selected_tower_type == "machine_gun":
                     cost = 250
@@ -842,8 +834,7 @@ class Game:
                                               tower_type="machine_gun")
                     self.towers.append(machine_gun_tower)
                     self.tower_coordinates[machine_gun_tower] = (x, y)
-                    # machine_gun_tower.place_tower(x, y)
-                    machine_gun_tower.place_image_tower(x, y)  # NEW CODE
+                    machine_gun_tower.place_image_tower(x, y)
                     self.update_player_info()
                 else:
                     print("No tower selected!")
