@@ -1,1 +1,1 @@
-{"towers": [{"coordinates": [43, 11], "type": "sniper"}, {"coordinates": [30, 6], "type": "sniper"}, {"coordinates": [15, 7], "type": "sniper"}, {"coordinates": [30, 20], "type": "basic"}], "player": {"money": 0, "health": 100, "score": 600}, "current_wave": 1}
+{"towers": [{"coordinates": [43, 11], "type": "sniper"}, {"coordinates": [30, 6], "type": "sniper"}, {"coordinates": [15, 7], "type": "sniper"}, {"coordinates": [30, 20], "type": "basic"}], "player": {"money": 120, "health": 100, "score": 1200}, "current_wave": 2}

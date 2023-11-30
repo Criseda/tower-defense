@@ -36,7 +36,7 @@ from math import hypot
 # ---All functions go here---
 
 
-def read_coordinates_new(filename):
+def read_coordinates(filename):
     coordinates = []
     with open(filename, 'r', encoding="utf8") as file:
         for line in file:
@@ -46,7 +46,7 @@ def read_coordinates_new(filename):
     return coordinates
 
 
-route = read_coordinates_new('route.txt')
+route = read_coordinates('route.txt')
 
 
 class Leaderboard:
@@ -557,6 +557,8 @@ class Game:
 
     def new_wave(self):
         # Increment the wave counter
+        if self.player.is_game_over():
+            return
         self.current_wave += 1
         messagebox.showinfo(
             "New Wave", f"Starting wave {self.current_wave}!")
@@ -568,7 +570,9 @@ class Game:
         if not self.player.is_game_over():
             self.check_wave_completion()
 
+
     def game_over(self):
+        self.game_in_progress = False
         messagebox.showinfo(
             "Game Over", "Game Over!\nWaves Survived: {}".format(self.current_wave))
         # Then do what you need to do for game over
