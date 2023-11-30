@@ -298,10 +298,10 @@ class Tower:
 
         # Load tower images
         self.tower_images = {
-            "basic": PhotoImage(file="basic_tower.png"),
-            "basic_shoot": PhotoImage(file="basic_tower_shoot.png"),
-            "sniper": PhotoImage(file="sniper_tower.png"),
-            "sniper_shoot": PhotoImage(file="sniper_tower_shoot.png"),
+            "basic": PhotoImage(file="basic.png"),
+            "basic_shoot": PhotoImage(file="basic_shoot.png"),
+            "sniper": PhotoImage(file="sniper.png"),
+            "sniper_shoot": PhotoImage(file="sniper_shoot.png"),
             "machine_gun": PhotoImage(file="machine_gun.png"),
             "machine_gun_shoot": PhotoImage(file="machine_gun_shoot.png"),
         }
@@ -378,15 +378,8 @@ class Tower:
         self.canvas.after(100, self.restore_tower_image)
 
     def restore_tower_image(self):
-        if self.tower_type == "basic":
-            self.canvas.itemconfig(
-                self.tower, image=self.tower_images["basic"])
-        elif self.tower_type == "sniper":
-            self.canvas.itemconfig(
-                self.tower, image=self.tower_images["sniper"])
-        elif self.tower_type == "machine_gun":
-            self.canvas.itemconfig(
-                self.tower, image=self.tower_images["machine_gun"])
+        self.canvas.itemconfig(self.tower,
+                               image=self.tower_images[self.tower_type])
 
     def restore_tower_colour(self):  # THIS IS LEGACY, YOU CAN REMOVE
         # Restore the tower colour to its original colour
