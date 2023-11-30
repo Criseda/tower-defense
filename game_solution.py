@@ -9,6 +9,7 @@ moving circles and the game itself.
 # has to work in python 3.8
 # tested on python 3.8.10
 # initial commit: 09-11-2023
+# TODO: you need to fix the pyimage1 error when pressing the boss key. Check website for more info.
 # TODO: configure the leaderboard a little bit more
 # TODO: boss key
 # TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
@@ -26,6 +27,7 @@ from tkinter import (Menu as TkMenu,
                      Button as TkButton,
                      Label as TkLabel,
                      Entry as TkEntry)
+from PIL import Image, ImageTk
 from math import hypot
 # ---All functions go here---
 
@@ -104,58 +106,59 @@ class MainMenu:
         settings_window.title("Settings")
         settings_window.geometry("300x150")
         settings_window.resizable(False, False)
-        
-        #Create input fields for cheat/boss keys
+
+        # Create input fields for cheat/boss keys
         cheat_money_label = TkLabel(settings_window,
                                     text=f"Cheat Money Key: {self.game.cheat_money_key.upper()}")
         cheat_money_label.pack()
         cheat_money_label.bind("<Button-1>",
                                lambda event: self.change_key(event, "money"))
         cheat_money_label.focus_set()
-        
+
         cheat_health_label = TkLabel(settings_window,
                                      text=f"Cheat Health Key: {self.game.cheat_health_key.upper()}")
         cheat_health_label.pack()
         cheat_health_label.bind("<Button-1>",
                                 lambda event: self.change_key(event, "health"))
         cheat_health_label.focus_set()
-        
+
         boss_label = TkLabel(settings_window,
                              text=f"Boss Key: {self.game.boss_key.upper()}")
         boss_label.pack()
         boss_label.bind("<Button-1>",
                         lambda event: self.change_key(event, "boss"))
         boss_label.focus_set()
-        
+
         # Exit button
         exit_button = TkButton(settings_window, text="Exit",
                                command=settings_window.destroy)
         exit_button.pack(pady=20)
-        
+
         # Run the settings window
         settings_window.mainloop()
- 
+
     def change_key(self, event, key_type):
         # Display "Enter key" and wait for user input
         original_text = event.widget.cget("text")
-        
+
         def on_key_press(event):
             pressed_key = event.char.lower() if event.char else event.keysym
-            if ord(pressed_key) == 27: # Escape key
+            if ord(pressed_key) == 27:  # Escape key
                 label.config(text=original_text)
             elif pressed_key not in self.get_assigned_keys():
                 self.update_key(event, label, key_type)
             else:
-                label.config(text=f"Cheat {key_type} key: {pressed_key.upper()} is already assigned!")
+                label.config(
+                    text=f"Cheat {key_type} key: {pressed_key.upper()} is already assigned!")
             label.unbind("<Key>")
             label.unbind("<FocusOut>")
-        
+
         label = event.widget
         label.config(text=f"Cheat {key_type} key: Enter key")
         label.bind("<Key>", on_key_press)
         label.bind("<FocusOut>", lambda event: label.unbind("<Key>"))
         label.focus_set()
-    
+
     def get_assigned_keys(self):
         # Get a list of keys that have already been assigned
         assigned_keys = [
@@ -163,9 +166,9 @@ class MainMenu:
             self.game.cheat_health_key,
             self.game.boss_key
         ]
-        
+
         return [key.lower() for key in assigned_keys if key]
-        
+
     def update_key(self, event, label, key_type):
         # Update the label with the pressed key
         pressed_key = event.char.lower()
@@ -177,7 +180,7 @@ class MainMenu:
                 self.game.cheat_health_key = pressed_key
             elif key_type == "boss":
                 self.game.boss_key = pressed_key
-        
+
     def start_new_game(self):
         # Hide the main menu
         self.main_menu_frame.place_forget()
@@ -258,7 +261,7 @@ class Player:
 
     def add_money(self, amount):
         self.money += amount
-        
+
     def add_health(self, amount):
         self.health += amount
 
@@ -492,11 +495,13 @@ class Game:
         self.player = Player()
         # this is the leaderboard
         self.leaderboard = Leaderboard()
-        
+
         self.cheat_money_key = 'c'  # Default cheat money key
         self.cheat_health_key = 'v'  # Default cheat health key
         self.boss_key = 'b'  # Default boss key
-        self.root.bind("<Key>", self.cheat_handler) # Cheat handler
+        self.boss_window = None  # Boss window
+
+        self.root.bind("<Key>", self.cheat_handler)  # Cheat handler
 
         # variable to check if the game is in progress:
         self.game_in_progress = False
@@ -587,7 +592,7 @@ class Game:
         self.start_circles()
 
         self.root.mainloop()
-    
+
     def cheat_handler(self, event):
         # Handle cheat keys
         pressed_key = event.char.lower() if event.char else event.keysym
@@ -599,8 +604,40 @@ class Game:
             self.player.add_health(100)
             print(f"Cheat activated! Health: {self.player.health}")
             self.update_player_info()
+        elif pressed_key == self.boss_key:
+            if self.boss_window:
+                self.close_boss_window()
+            else:
+                self.open_boss_window()
         else:
             print(f"Unknown key: {pressed_key}")
+
+    def open_boss_window(self):
+        # Create a fullscreen window to display the pdf
+        self.boss_window = Tk()
+        self.boss_window.title("Very important pdf")
+        self.boss_window.geometry("1280x720")
+        self.boss_window.resizable(False, False)
+
+        # Create a canvas to display the pdf
+        boss_canvas = TkCanvas(self.boss_window, width=1280, height=720)
+        boss_canvas.pack()
+
+        # Insert pdf image here
+        img = Image.open("important_document.jpg")
+        img = img.resize((1280, 720), Image.LANCZOS)
+        img = ImageTk.PhotoImage(img)
+        boss_canvas.create_image(0, 0, anchor="nw", image=img)
+        boss_canvas.image = img  # Keep a reference to the image to prevent garbage collection
+
+        self.boss_window.bind(
+            "<Escape>", lambda event: self.close_boss_window())
+
+    def close_boss_window(self):
+        # Destroy the boss window
+        if self.boss_window is not None:
+            self.boss_window.destroy()
+            self.boss_window = None
 
     def show_game_over_screen(self):
         # Display a new canvas/frame for entering initials
@@ -668,7 +705,6 @@ class Game:
         # Schedule the next wave if the player has not lost
         if not self.player.is_game_over():
             self.check_wave_completion()
-
 
     def game_over(self):
         self.game_in_progress = False
