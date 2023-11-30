@@ -10,8 +10,6 @@ moving circles and the game itself.
 # tested on python 3.8.10
 # initial commit: 09-11-2023
 # TODO: configure the leaderboard a little bit more
-# TODO: add tower prices, images, etc. on the tower buttons, make it easier to see what you can afford
-# TODO: show the currently selected tower type on the screen somewhere, once placed, set tower_type held in hand to None
 
 import json
 import time
@@ -545,7 +543,8 @@ class Game:
 
         # these are the waves
         self.current_wave = 0
-        self.num_circles_per_wave = [5, 8, 12, 16, 20]
+        self.num_circles_per_wave = [
+            5 + 4 * i for i in range(100)]  # 100 waves
         self.time_between_waves = 1000  # 1 second between waves
 
         # this is the frame that holds the canvas
