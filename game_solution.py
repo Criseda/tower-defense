@@ -61,11 +61,15 @@ class Leaderboard:
     def load_leaderboard(self):
         """
         Loads the leaderboard from the leaderboard file.
-        If the file does not exist, initializes an empty leaderboard.
+        If the file does not exist or is empty, initializes an empty leaderboard.
         """
         try:
             with open(self.filename, "r", encoding="utf8") as file:
-                self.scores = json.load(file)
+                data = file.read()
+                if data:
+                    self.scores = json.loads(data)
+                else:
+                    self.scores = []
         except FileNotFoundError:
             self.scores = []
 
@@ -333,12 +337,12 @@ class MainMenu:
                     tower = Tower(self.game.canvas, 3, self.game.cell_size,
                                   player=self.game.player,
                                   fire_rate=2000,
-                                  dps=30,
+                                  dps=20,
                                   tower_type="sniper")
                 elif tower_type == 'machine_gun':
                     tower = Tower(self.game.canvas, 3, self.game.cell_size,
                                   player=self.game.player,
-                                  tower_range=100,
+                                  tower_range=150,
                                   fire_rate=200,
                                   dps=5,
                                   tower_type="machine_gun")
@@ -911,7 +915,10 @@ class Game:
         # these are the waves
         self.current_wave = 0
         self.num_circles_per_wave = [
-            5 + 4 * i for i in range(100)]  # 100 waves
+            5 + 4 * i if i < 5 else 5 + 5 *
+            (i - 5) if i < 10 else 5 + 6 * (i - 10)
+            for i in range(100)
+        ]
         self.time_between_waves = 1000  # 1 second between waves
 
         # this is the frame that holds the canvas
@@ -945,7 +952,7 @@ class Game:
         # Variable to store the selected tower type:
         self.selected_tower_type = None
 
-        self.basic_tower_price = 170
+        self.basic_tower_price = 220
         basic_tower_image = PhotoImage(file="basic.png")
         basic_tower_button = TkButton(
             self.selection_frame,
@@ -957,7 +964,7 @@ class Game:
             height=button_height
         )
         basic_tower_button.pack(pady=10)
-        self.sniper_tower_price = 200
+        self.sniper_tower_price = 400
         sniper_tower_image = PhotoImage(file="sniper.png")
         sniper_tower_button = TkButton(
             self.selection_frame,
@@ -969,7 +976,7 @@ class Game:
             height=button_height
         )
         sniper_tower_button.pack(pady=10)
-        self.machine_gun_tower_price = 200
+        self.machine_gun_tower_price = 350
         machine_gun_tower_image = PhotoImage(file="machine_gun.png")
         machine_gun_tower_button = TkButton(
             self.selection_frame,
@@ -1311,7 +1318,8 @@ class Game:
                                         self.cell_size,
                                         player=self.player,
                                         tower_range=200,
-                                        fire_rate=1000,
+                                        fire_rate=800,
+                                        dps=20,
                                         tower_type="basic")
                     self.towers.append(basic_tower)
                     self.tower_coordinates[basic_tower] = (x, y)
@@ -1340,9 +1348,9 @@ class Game:
                                               3,
                                               self.cell_size,
                                               player=self.player,
-                                              tower_range=100,
+                                              tower_range=150,
                                               fire_rate=200,
-                                              dps=5,
+                                              dps=10,
                                               tower_type="machine_gun")
                     self.towers.append(machine_gun_tower)
                     self.tower_coordinates[machine_gun_tower] = (x, y)
