@@ -914,8 +914,7 @@ class Game:
         # these are the waves
         self.current_wave = 0
         self.num_circles_per_wave = [
-            5 + 4 * i if i < 5 else 5 + 5 *
-            (i - 5) if i < 10 else 5 + 6 * (i - 10)
+            5 + 5 * i
             for i in range(100)
         ]
         self.time_between_waves = 1000  # 1 second between waves
