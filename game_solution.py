@@ -127,24 +127,41 @@ class MainMenu:
         self.main_menu_frame.place(relwidth=1, relheight=1)
 
         # Title label
-        title_label = TkLabel(self.main_menu_frame, text="Tower Defense Game", font=(
-            "Helvetica", 20), fg="white", bg="black")
+        title_label = TkLabel(
+            self.main_menu_frame,
+            text="Tower Defense Game",
+            font=("Helvetica", 20),
+            fg="white",
+            bg="black"
+        )
         title_label.pack(pady=50)
 
         # Buttons
         new_game_button = TkButton(
-            self.main_menu_frame, text="New Game", command=self.start_new_game)
+            self.main_menu_frame,
+            text="New Game",
+            command=self.start_new_game
+        )
         new_game_button.pack(pady=20)
 
         load_game_button = TkButton(
-            self.main_menu_frame, text="Load Game", command=self.load_game)
+            self.main_menu_frame,
+            text="Load Game",
+            command=self.load_game
+        )
         load_game_button.pack(pady=20)
 
-        exit_button = TkButton(self.main_menu_frame,
-                               text="Exit", command=self.root.destroy)
+        exit_button = TkButton(
+            self.main_menu_frame,
+            text="Exit",
+            command=self.root.destroy
+        )
         exit_button.pack(pady=20)
-        settings_buton = TkButton(self.main_menu_frame,
-                                  text="Settings", command=self.open_settings)
+        settings_buton = TkButton(
+            self.main_menu_frame,
+            text="Settings",
+            command=self.open_settings
+        )
         settings_buton.pack(pady=20)
 
     def open_settings(self):
@@ -623,11 +640,12 @@ class MovingCircle:
         self.health = health
         self.player = player
         self.game = game
-        self.circle = self.canvas.create_oval(x,
-                                              y,
-                                              x + radius * 2,
-                                              y + radius * 2,
-                                              fill='black')
+        self.circle = self.canvas.create_oval(
+            x, y,
+            x + radius * 2,
+            y + radius * 2,
+            fill='black'
+        )
         self.current_coordinate_index = 0
 
     def move_circle(self, delay=20):
@@ -640,11 +658,12 @@ class MovingCircle:
         if route:
             if self.current_coordinate_index < len(route):
                 x, y = route[self.current_coordinate_index]
-                self.canvas.coords(self.circle,
-                                   x,
-                                   y,
-                                   x+self.radius * 2,
-                                   y+self.radius * 2)
+                self.canvas.coords(
+                    self.circle,
+                    x, y,
+                    x+self.radius * 2,
+                    y+self.radius * 2
+                )
                 self.canvas.update()
                 self.current_coordinate_index += 1
 
