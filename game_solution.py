@@ -3,7 +3,6 @@ This module contains the implementation of a Tower Defense Game.
 Laurentiu Cristian Preda
 initial commit: 09-11-2023
 """
-# TODO: balance the towers asap!!!
 import ast
 import json
 import time
