@@ -3,6 +3,7 @@ This module contains the implementation of a Tower Defense Game.
 Laurentiu Cristian Preda
 initial commit: 09-11-2023
 """
+# TODO: balance the towers asap!!!
 import ast
 import json
 import time
@@ -137,32 +138,48 @@ class MainMenu:
         title_label.pack(pady=50)
 
         # Buttons
+        button_width = 15
+        button_height = 2
+
         new_game_button = TkButton(
             self.main_menu_frame,
             text="New Game",
-            command=self.start_new_game
+            font=("Helvetica", 16),
+            command=self.start_new_game,
+            width=button_width,
+            height=button_height
         )
         new_game_button.pack(pady=20)
 
         load_game_button = TkButton(
             self.main_menu_frame,
             text="Load Game",
-            command=self.load_game
+            font=("Helvetica", 16),
+            command=self.load_game,
+            width=button_width,
+            height=button_height
         )
         load_game_button.pack(pady=20)
+
+        settings_button = TkButton(
+            self.main_menu_frame,
+            text="Settings",
+            font=("Helvetica", 16),
+            command=self.open_settings,
+            width=button_width,
+            height=button_height
+        )
+        settings_button.pack(pady=20)
 
         exit_button = TkButton(
             self.main_menu_frame,
             text="Exit",
-            command=self.root.destroy
+            font=("Helvetica", 16),
+            command=self.root.destroy,
+            width=button_width,
+            height=button_height
         )
         exit_button.pack(pady=20)
-        settings_buton = TkButton(
-            self.main_menu_frame,
-            text="Settings",
-            command=self.open_settings
-        )
-        settings_buton.pack(pady=20)
 
     def open_settings(self):
         """
