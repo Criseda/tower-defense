@@ -171,7 +171,7 @@ class MainMenu:
         # Open the settings menu
         settings_window = Tk()
         settings_window.title("Settings")
-        settings_window.geometry("300x150")
+        settings_window.geometry("300x200")
         settings_window.resizable(False, False)
 
         # Create input fields for cheat/boss keys
@@ -195,6 +195,10 @@ class MainMenu:
         boss_label.bind("<Button-1>",
                         lambda event: self.change_key(event, "boss"))
         boss_label.focus_set()
+
+        info_label = TkLabel(settings_window,
+                             text="Click on a label to change the key.\nPress Escape to cancel.")
+        info_label.pack(pady=20)
 
         # Exit button
         exit_button = TkButton(settings_window, text="Exit",
